@@ -152,15 +152,15 @@ def functional_probe(base, host, port, work):
 
     def multipart_part(filename, content, media="text/plain"):
         return (
-            f"--{boundary}\\r\\n"
-            f'Content-Disposition: form-data; name="files"; filename="{filename}"\\r\\n'
-            f"Content-Type: {media}\\r\\n\\r\\n"
-        ).encode() + content + b"\\r\\n"
+            f"--{boundary}\r\n"
+            f'Content-Disposition: form-data; name="files"; filename="{filename}"\r\n'
+            f"Content-Type: {media}\r\n\r\n"
+        ).encode() + content + b"\r\n"
 
     alpha, beta = b"alpha-Mojara", b"beta-Mojara"
     multi = (multipart_part("first.txt", alpha)
              + multipart_part("second.txt", beta)
-             + f"--{boundary}--\\r\\n".encode())
+             + f"--{boundary}--\r\n".encode())
     multi_headers = {"Content-Type": "multipart/form-data; boundary=" + boundary}
     code, _, _ = http(base, "/uploads", method="POST", data=multi, headers=multi_headers)
     check(code == 403, "unauthorized multi-upload was accepted")
@@ -180,7 +180,7 @@ def functional_probe(base, host, port, work):
     bad = (multipart_part("first.txt", alpha)
            + multipart_part("second.txt", beta)
            + multipart_part("third.txt", b"too-many")
-           + f"--{boundary}--\\r\\n".encode())
+           + f"--{boundary}--\r\n".encode())
     code, _, _ = http(base, "/uploads", method="POST", data=bad, headers=multi_headers)
     check(code == 413, f"multi-upload exceeding file count was not rejected: {code}")
     check(present == {x.name for x in (work / "private_uploads").glob("upload-*")},
