@@ -16,17 +16,17 @@ Mojara publishes native Linux x86-64 and ARM64 packages in GitHub Releases. Its 
 
 macOS validation is manual while GitHub-hosted macOS runners are frequently queued. You can run it from **Actions → macOS Apple Silicon validation (experimental) → Run workflow**. The Linux jobs are intentionally independent so a queued Mac runner does not falsely mark the Linux checks as failed.
 
-## Actual platform support
+## Platform support
 
-| Target | CLI | Native regression tests | Full app | Production package |
-| --- | --- | --- | --- | --- |
-| Linux x86-64 | Verified | Verified | HTTP, SQL, sessions, uploads, WebSockets, concurrency and shutdown verified | **GitHub Release 1.2.6** |
-| Linux ARM64 | Verified | Verified | HTTP, signed sessions, multipart uploads, WebSockets, concurrent traffic, shutdown and live SQL verified | **GitHub Release 1.2.6** |
-| macOS Apple Silicon | Runner-dependent | Not verified | Not verified | Not released |
-| Windows through WSL2 x86-64 | Existing Linux setup | Via Linux | Via Linux | Supported via Linux package |
-| Native Windows | No native Mojo toolchain yet | Not verified | Not verified | Not released |
+| Platform | Status |
+| --- | --- |
+| Linux x86-64 | **Supported** |
+| Linux ARM64 (AArch64) | **Supported** |
+| Windows 10/11 with WSL2 Ubuntu (x86-64) | **Supported** |
+| macOS Apple Silicon | Experimental |
+| Native Windows | Not yet supported |
 
-**Linux ARM64 and x86-64 have publicly available release artifacts.** Both were built on their respective native runners and passed clean-runner SQL and application smoke tests. The custom Conda channel has not yet been updated for ARM64; native ABI/provenance and complete extension audits remain tracked in [issue #9](https://github.com/mojara-framework/mojara/issues/9).
+For release downloads, see the [Mojara 1.2.6 release](https://github.com/mojara-framework/mojara/releases/tag/v1.2.6). The separate hosted Conda channel is maintained independently; its deployment is tracked in [issue #12](https://github.com/mojara-framework/mojara/issues/12).
 
 ## Native Mojo Windows
 

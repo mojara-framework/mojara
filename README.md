@@ -65,7 +65,7 @@ See [Architecture](docs/ARCHITECTURE.md) for component boundaries, [verified sou
 | macOS Apple Silicon | Experimental |
 | Windows native | Not yet supported |
 
-See [cross-platform progress](docs/CROSS-PLATFORM.md) and [Windows approach](docs/WINDOWS.md). CI badges are indicators of the named tests, **not** broad production certification.
+See [Windows setup](docs/WINDOWS.md) for installation guidance.
 
 ## Repository layout
 
