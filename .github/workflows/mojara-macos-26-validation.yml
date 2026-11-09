@@ -1,6 +1,15 @@
 name: macOS 26 Apple Silicon framework validation
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'source/**'
+      - 'scripts/**'
+      - 'packaging/macos/**'
+      - 'pixi.toml'
+      - '.github/workflows/mojara-macos-26-validation.yml'
+      - '.github/workflows/release-macos.yml'
   pull_request:
     paths:
       - 'source/**'
