@@ -18,7 +18,9 @@ command -v patchelf >/dev/null || { echo 'patchelf is required for packaging' >&
 while IFS= read -r -d '' native; do
   patchelf --set-rpath '$ORIGIN:$ORIGIN/../../../lib' "$native"
 done < <(find "$STAGE/lib" -type f -name '*.so*' -print0)
-patchelf --set-rpath '$ORIGIN/../lib:$ORIGIN/../../../lib' "$STAGE/bin/mojara"
+# Preserve the Mojo compiler runtime lookup metadata on the native CLI.
+# Rattler relocates that executable during package construction; overriding
+# its RUNPATH here breaks libKGENCompilerRTShared.so resolution.
 # An absolute path to the CI compiler or build directory must not escape
 # into a distributable artifact.
 if command -v readelf >/dev/null; then
@@ -30,7 +32,7 @@ if command -v readelf >/dev/null; then
         exit 1
         ;;
     esac
-  done < <(find "$STAGE/lib" "$STAGE/bin" -type f \( -name '*.so*' -o -name mojara \) -print0)
+  done < <(find "$STAGE/lib" -type f -name '*.so*' -print0)
 fi
 cp "$ROOT/LICENSE" "$STAGE/LICENSE"
 mkdir -p "$STAGE/share/doc/mojara/licenses"
