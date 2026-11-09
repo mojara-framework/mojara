@@ -1,15 +1,28 @@
 # Mojara
 
-Mojara is a native Mojo web framework. This repository initially hosts the **cross-platform portability development source** and GitHub Actions checks for Linux x86-64, Linux ARM64, and Apple Silicon macOS.
+**Mojara** is an open-source web framework built with the Mojo programming language. It offers native HTTP routing, APIs, authentication, MySQL/PostgreSQL integration, sessions, WebSockets, and a native developer CLI.
 
-**Current stable release:** Mojara 1.2.5 for Linux x86-64 (including Windows via WSL2). The other targets are experimental until full native HTTP, WebSocket, database, upload, and packaging tests pass.
+**Stable release:** Mojara 1.2.5 for Linux x86-64 (including Windows with WSL2). Other platforms are experimental.
 
-Documentation: https://mojara.kasua.ng/docs/
+## Cross-platform CI
 
-## CI
+The **Mojara cross-platform CI** workflow builds the native Mojo command-line tool and runs the project-generator smoke test on:
 
-The `Mojara cross-platform CI` workflow compiles and tests the native Mojo CLI on three operating-system/architecture runners. The full native framework test is a separate release gate, not an implied pass when the CLI succeeds.
+- Ubuntu Linux x86-64 (`ubuntu-24.04`)
+- Ubuntu Linux ARM64 (`ubuntu-24.04-arm`)
+- macOS Apple Silicon (`macos-15`)
 
-## Contributing
+It runs automatically on pushes and pull requests and can also be started manually from GitHub Actions. These checks do **not** yet prove the complete Mojara HTTP server works on the new platforms. Full framework precompilation, native bridges, database integration, WebSocket and packaging require separate validation.
 
-Please do not claim ARM64 or macOS as supported until native integration tests and packages have been verified. Windows native support is not part of the current Mojo toolchain.
+See [CI guide](docs/CROSS-PLATFORM.md), [official documentation](https://mojara.kasua.ng/docs/) and [the current release](https://mojara.kasua.ng/docs/releases.html).
+
+### Install Mojara (supported Linux x86-64)
+
+```bash
+pixi global install "mojara==1.2.5" -c https://mojara.kasua.ng/conda/ -c https://conda.modular.com/max/ -c conda-forge
+mojara new my-app
+cd my-app
+mojara dev
+```
+
+**Do not use this repository's experimental source to replace your stable installation.**
