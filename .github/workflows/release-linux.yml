@@ -28,7 +28,7 @@ concurrency:
 
 jobs:
   package:
-    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    if: github.event_name == 'push' || github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     name: Build production Conda / ${{ matrix.target }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 65
