@@ -1,6 +1,11 @@
 name: Publish native Mojara Linux packages
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/release-linux.yml'
+      - '.github/workflows/release-macos.yml'
   pull_request:
     paths:
       - 'source/**'

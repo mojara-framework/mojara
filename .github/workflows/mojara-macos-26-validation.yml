@@ -10,6 +10,7 @@ on:
       - 'pixi.toml'
       - '.github/workflows/mojara-macos-26-validation.yml'
       - '.github/workflows/release-macos.yml'
+      - '.github/workflows/release-linux.yml'
   pull_request:
     paths:
       - 'source/**'
