@@ -24,6 +24,7 @@ jobs:
     timeout-minutes: 20
     env:
       GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
       RELEASE_COMMIT: ${{ github.event.workflow_run.head_sha || github.sha }}
     steps:
       - name: Verify both platform release gates against current main
@@ -31,12 +32,15 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
-          MAIN="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq '.object.sha')"
-          if [[ "$MAIN" != "$RELEASE_COMMIT" ]]; then
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "Main moved; do not attach macOS artifacts from a stale commit"
-            exit 0
-          fi
+          # Release binaries must belong to the immutable published version
+          # tag; later README/workflow commits must not invalidate that SHA.
+          TAG_KIND="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v1.2.7" --jq '.object.type')"
+          [[ "$TAG_KIND" == commit ]] || {
+            echo "Expected lightweight v1.2.7 commit tag, got $TAG_KIND" >&2
+            exit 1
+          }
+          RELEASE_COMMIT="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v1.2.7" --jq '.object.sha')"
+          echo "Verifying native packages against published v1.2.7 source $RELEASE_COMMIT"
           LINUX="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/release-linux.yml/runs?branch=main&status=success&per_page=15" \
             --jq ".workflow_runs[] | select(.head_sha == \"$RELEASE_COMMIT\") | .id" | head -1)"
           MAC="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/mojara-macos-26-validation.yml/runs?branch=main&status=success&per_page=15" \
