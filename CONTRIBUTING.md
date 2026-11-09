@@ -12,17 +12,9 @@ Thank you for contributing to Mojara. This is the official framework source repo
 
 ## Local development
 
-Use Linux x86-64 for the currently supported source development flow. This **developer** workspace uses Pixi to pin Mojo; users installing released Mojara do **not** need a Pixi workspace.
+To compile Mojara itself, follow the complete [build-from-source guide](docs/BUILD-FROM-SOURCE.md), available for Linux x86-64, Linux ARM64, and macOS Apple Silicon. The build uses Pixi for Mojo 1.2.0 and all native dependencies, independently pinned upstream source archives, and the first-party framework and CLI.
 
-```bash
-git clone https://github.com/mojara-framework/mojara.git
-cd mojara
-pixi install
-pixi run bash scripts/build-cli.sh
-bash scripts/test-native.sh
-```
-
-These commands exercise the first-party CLI and native C tests. Building a complete standalone SDK additionally requires the pinned Flare/JSON sources and other third-party build inputs; see [architecture](docs/ARCHITECTURE.md) and [release checklist](docs/RELEASE-CHECKLIST.md).
+The ordinary user installation does **not** require cloning the repository or building the framework. Users can install with Pixi or run the [multiarchitecture Docker image](docs/DOCKER.md).
 
 ## Pull requests
 
