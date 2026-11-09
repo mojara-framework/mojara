@@ -112,7 +112,7 @@ def _api_app() -> String:
         "def health(req: Request) raises -> Response:\n"
         '    return Response.json(\'{"status":"ok","framework":"Mojara"}\')\n\n\n'
         "def main() raises:\n"
-        '    var api = Api("Mojara Starter API", "1.2.6")\n'
+        '    var api = Api("Mojara Starter API", "1.2.7")\n'
         '    api.get("/", health, "Root")\n'
         '    api.get("/health", health, "Health")\n'
         "    api.install_docs()\n"
@@ -222,7 +222,7 @@ def _new(name: String, api: Bool) raises:
         "padding:50px}h1{color:#dd5c24}main{max-width:800px;margin:auto}\n"
     )
     Path(name + "/.gitignore").write_text("build/\n.mojo_cache/\n")
-    Path(name + "/mojara.project").write_text("name " + name + "\nversion 1.2.6\n")
+    Path(name + "/mojara.project").write_text("name " + name + "\nversion 1.2.7\n")
     print("Created", name)
     print("Next: cd " + name)
     print("      mojara dev")
@@ -600,7 +600,7 @@ def _dev_watch() raises:
 
 
 def _help():
-    print("Mojara 1.2.6 — Native Mojo framework CLI")
+    print("Mojara 1.2.7 — Native Mojo framework CLI")
     print("Usage: mojara <command> [args]")
     print("  new NAME [--api]   Create project")
     print("  dev                Watch, rebuild and restart on file changes")
@@ -629,7 +629,7 @@ def main() raises:
     if command == "help" or command == "--help" or command == "-h":
         _help()
     elif command == "version" or command == "--version" or command == "-v":
-        print("Mojara 1.2.6 (native Mojo CLI)")
+        print("Mojara 1.2.7 (native Mojo CLI)")
     elif command == "doctor":
         _check()
     elif command == "new":
