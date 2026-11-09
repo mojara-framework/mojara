@@ -1,0 +1,67 @@
+name: Native Conda package fresh-install qualification
+
+on:
+  push:
+    paths:
+      - 'packaging/ci/**'
+      - 'scripts/ci/bootstrap-source.sh'
+      - 'scripts/ci/build-source-sdk.sh'
+      - 'scripts/ci/package-and-install.sh'
+      - '.github/workflows/ci-package.yml'
+  pull_request:
+    paths:
+      - 'packaging/ci/**'
+      - 'scripts/ci/bootstrap-source.sh'
+      - 'scripts/ci/build-source-sdk.sh'
+      - 'scripts/ci/package-and-install.sh'
+      - '.github/workflows/ci-package.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mojara-native-package-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci-package:
+    name: Build and fresh-install CI package / ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            target: linux-64
+          - runner: ubuntu-24.04-arm
+            target: linux-aarch64
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install native development dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            build-essential pkg-config curl ca-certificates zstd patchelf \
+            libssl-dev zlib1g-dev libdeflate-dev libbrotli-dev \
+            libsqlite3-dev libpq-dev libmariadb-dev libsodium-dev
+      - uses: prefix-dev/setup-pixi@v0.9.3
+        with:
+          cache: false
+      - name: Bootstrap checksum-verified source, no x86 native code
+        run: bash scripts/ci/bootstrap-source.sh
+      - name: Compile native SDK on host architecture
+        run: pixi run bash scripts/ci/build-source-sdk.sh
+      - name: Build CI-only Conda candidate and fresh Pixi global install
+        run: pixi run bash scripts/ci/package-and-install.sh
+      - name: Upload unpublished CI packages for inspection
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unpublished-native-package-${{ matrix.target }}
+          path: |
+            build/full-integration/ci-packages/**/*.conda
+            build/full-integration/fresh-install-server.log
+            build/full-integration/fresh-install-health.json
+          if-no-files-found: ignore
