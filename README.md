@@ -8,10 +8,10 @@ Mojara is an open-source, Mojo-first web framework for routing, HTTP APIs, templ
 
 ## Install
 
-Install Mojara using Pixi on Linux x86-64, Linux ARM64, or Windows with WSL2 Ubuntu. No source checkout is required.
+Install Mojara with Pixi on Linux x86-64, Linux ARM64, macOS Apple Silicon, or Windows with WSL2 Ubuntu. No source checkout is required.
 
 ```bash
-pixi global install 'mojara==1.2.6' \
+pixi global install 'mojara==1.2.7' \
   -c https://mojara.kasua.ng/conda/ \
   -c https://conda.modular.com/max/ \
   -c conda-forge
@@ -31,7 +31,7 @@ The `new` command creates an application directory directly, without an addition
 
 ## What it includes
 
-- Native Mojo CLI: project generation, development watching, compilation, local startup, diagnostics and Linux deployment.
+- Native Mojo CLI: project generation, development watching, compilation, local startup, diagnostics and deployment tooling.
 - HTTP routing, JSON responses, templates, static files and multipart uploads.
 - Sessions, cookies, authentication and security helpers.
 - MySQL, PostgreSQL and SQLite interfaces; migrations and ORM helpers.
@@ -47,10 +47,11 @@ See [Architecture](docs/ARCHITECTURE.md) for component boundaries, [verified sou
 | Linux x86-64 | **Supported** |
 | Linux ARM64 (AArch64) | **Supported** |
 | Windows 10/11 with WSL2 Ubuntu (x86-64) | **Supported** |
-| macOS Apple Silicon | Experimental |
+| macOS Apple Silicon | **Supported** |
+| macOS Intel | Not yet supported |
 | Windows native | Not yet supported |
 
-See [Windows setup](docs/WINDOWS.md) for installation guidance.
+See [macOS installation](docs/INSTALL-MACOS.md) and [Windows setup](docs/WINDOWS.md) for platform-specific guidance.
 
 ## Repository layout
 

@@ -2,6 +2,14 @@
 
 All notable changes are recorded here. Dates are in UTC.
 
+## 1.2.7 — 2026-11-09
+
+- Added native macOS Apple Silicon builds of the Mojara Mojo framework, command-line interface, and C/C++ bridges.
+- Implemented macOS dynamic-library loading and compatible native randomness and connection-pool primitives.
+- Built a generated Mojara application and verified its HTTP server on Apple Silicon.
+- Added a native `osx-arm64` Conda package with independent fresh-install and application startup qualification.
+- Released updated Linux x86-64 and ARM64 packages from the same reviewed source revision, retaining their database and HTTP integration checks.
+
 ## 1.2.6 — 2026-11-09
 
 - Published native Linux x86-64 and ARM64 Conda packages with SHA-256 checksums as verified GitHub Release assets.
@@ -32,4 +40,4 @@ All notable changes are recorded here. Dates are in UTC.
 - Added automated Linux x86-64 / ARM64 native bridge regression tests.
 - Added source documentation, contribution policies and release gates.
 
-Native Windows and macOS remain unqualified for public packages. The GitHub Linux release is available; deployment to the separately hosted custom Conda channel remains pending.
+Native Windows and Intel macOS remain unreleased.
