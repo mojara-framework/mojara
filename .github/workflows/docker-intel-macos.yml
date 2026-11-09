@@ -1,0 +1,71 @@
+name: macOS Intel Docker compatibility (Linux x86-64)
+
+on:
+  pull_request:
+    paths:
+      - 'packaging/docker/**'
+      - 'scripts/macos/mojara-intel.sh'
+      - '.github/workflows/docker-intel-macos.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'packaging/docker/**'
+      - 'scripts/macos/mojara-intel.sh'
+      - '.github/workflows/docker-intel-macos.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux-amd64-container:
+    name: Intel-compatible Docker / Linux amd64
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image using published Mojara Conda package
+        run: docker build --platform linux/amd64 -t mojara-intel:ci -f packaging/docker/Dockerfile .
+      - name: Check native CLI and Mojo compiler in Linux x86-64 container
+        run: |
+          docker run --rm --platform linux/amd64 mojara-intel:ci version
+          docker run --rm --platform linux/amd64 mojara-intel:ci doctor
+      - name: Generate and compile real Mojara application in shared workspace
+        run: |
+          set -Eeuo pipefail
+          mkdir -p build/docker-intel-ci
+          chmod 777 build/docker-intel-ci
+          docker run --rm --platform linux/amd64 \
+            -v "$PWD/build/docker-intel-ci:/workspace" \
+            mojara-intel:ci new hello-intel
+          test -s build/docker-intel-ci/hello-intel/app.mojo
+          docker run --rm --platform linux/amd64 \
+            -v "$PWD/build/docker-intel-ci:/workspace" \
+            -w /workspace/hello-intel \
+            mojara-intel:ci build
+          test -x build/docker-intel-ci/hello-intel/build/app
+      - name: Serve HTTP app through published container port
+        run: |
+          set -Eeuo pipefail
+          docker run --rm --detach --name mojara-intel-http-test \
+            --platform linux/amd64 \
+            -e MOJARA_HOST=0.0.0.0 -e MOJARA_PORT=8000 \
+            -p 127.0.0.1:18883:8000 \
+            -v "$PWD/build/docker-intel-ci:/workspace" \
+            -w /workspace/hello-intel \
+            mojara-intel:ci start --local
+          trap 'docker logs mojara-intel-http-test || true; docker rm -f mojara-intel-http-test >/dev/null 2>&1 || true' EXIT
+          for i in $(seq 1 45); do
+            if curl -fsS --max-time 1 http://127.0.0.1:18883/health -o build/docker-intel-ci/health.json; then
+              python3 - <<'PY'
+          import json
+          with open('build/docker-intel-ci/health.json') as file:
+              result=json.load(file)
+          assert result == {'status':'ok','framework':'Mojara'}, result
+          print('PASS: Linux x86-64 Mojara container builds and serves HTTP')
+          PY
+              exit 0
+            fi
+            sleep 1
+          done
+          exit 1
