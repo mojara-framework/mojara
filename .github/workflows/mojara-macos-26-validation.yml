@@ -7,6 +7,10 @@ on:
       - 'scripts/ci/bootstrap-source.sh'
       - 'scripts/ci/build-macos-sdk.sh'
       - 'scripts/build-cli.sh'
+      - 'scripts/ci/prepare-macos-payload.sh'
+      - 'scripts/ci/build-macos-package.sh'
+      - 'scripts/ci/install-macos-package.sh'
+      - 'packaging/macos/**'
       - 'pixi.toml'
       - '.github/workflows/mojara-macos-26-validation.yml'
   workflow_dispatch:
@@ -70,6 +74,16 @@ jobs:
           done
           tail -100 ../build/macos-app.log
           exit 1
+      - name: Build unpublished Apple Silicon Conda package
+        run: pixi run bash scripts/ci/build-macos-package.sh
+      - name: Upload native macOS package for independent installation
+        uses: actions/upload-artifact@v4
+        with:
+          name: mojara-osx-arm64-candidate
+          path: build/full-integration/macos-packages/**/*.conda
+          if-no-files-found: error
+          retention-days: 7
+
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
@@ -77,4 +91,29 @@ jobs:
           path: |
             build/macos-app.log
             build/macos-health.json
+          if-no-files-found: ignore
+
+  clean-install:
+    name: Fresh native Mojara package / osx-arm64
+    needs: macos-framework
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: prefix-dev/setup-pixi@v0.9.3
+        with:
+          cache: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: mojara-osx-arm64-candidate
+          path: build/macos-package-download
+      - name: Install Mojara native package and run HTTP app from fresh environment
+        run: bash scripts/ci/install-macos-package.sh
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: macos-fresh-install-diagnostics
+          path: |
+            build/macos-fresh-install/server.log
+            build/macos-fresh-install/health.json
           if-no-files-found: ignore
