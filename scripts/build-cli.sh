@@ -18,5 +18,11 @@ case "$(uname -s)/$(uname -m)" in
     flags+=("--target-cpu=generic" "-Xlinker=-ldl")
     ;;
 esac
-mojo build source/cli/mojara_cli.mojo -o build/bin/mojara "${flags[@]}"
+# Apple's Bash 3.2 treats expansion of an empty array as unbound with set -u.
+# Build macOS without Linux-only linker and CPU flags.
+if [[ "$(uname -s)" == "Darwin" ]]; then
+  mojo build source/cli/mojara_cli.mojo -o build/bin/mojara
+else
+  mojo build source/cli/mojara_cli.mojo -o build/bin/mojara "${flags[@]}"
+fi
 ./build/bin/mojara version
