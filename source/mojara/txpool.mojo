@@ -4,6 +4,7 @@ PooledDatabase owns native connections, DbLease controls one checked-out
 connection, and DbResult holds detached results. Release each lease on its
 acquiring thread and keep the pool alive until all leases return."""
 
+from .platform import library_name
 from std.ffi import OwnedDLHandle, c_char, c_int, c_uint, c_size_t
 
 
@@ -24,7 +25,7 @@ struct DbResult:
     ) raises:
         """Execute a query on a pool lease and own the materialized result."""
         self._lib = OwnedDLHandle(
-            "extensions/txpool_v0131/build/native/libmojara_txpool_mojo.so"
+            library_name("extensions/txpool_v0131/build/native/libmojara_txpool_mojo.so", "extensions/txpool_v0131/build/native/libmojara_txpool_mojo.dylib")
         )
         var result: Optional[Pointer[NoneType, MutUntrackedOrigin]] = None
         var call = self._lib.get_function[c_int]("mjx_query0")
@@ -44,7 +45,7 @@ struct DbResult:
     ) raises:
         """Execute a query on a pool lease and own the materialized result."""
         self._lib = OwnedDLHandle(
-            "extensions/txpool_v0131/build/native/libmojara_txpool_mojo.so"
+            library_name("extensions/txpool_v0131/build/native/libmojara_txpool_mojo.so", "extensions/txpool_v0131/build/native/libmojara_txpool_mojo.dylib")
         )
         var result: Optional[Pointer[NoneType, MutUntrackedOrigin]] = None
         var call = self._lib.get_function[c_int]("mjx_query1")
@@ -71,7 +72,7 @@ struct DbResult:
     ) raises:
         """Execute a query on a pool lease and own the materialized result."""
         self._lib = OwnedDLHandle(
-            "extensions/txpool_v0131/build/native/libmojara_txpool_mojo.so"
+            library_name("extensions/txpool_v0131/build/native/libmojara_txpool_mojo.so", "extensions/txpool_v0131/build/native/libmojara_txpool_mojo.dylib")
         )
         var result: Optional[Pointer[NoneType, MutUntrackedOrigin]] = None
         var call = self._lib.get_function[c_int]("mjx_query2")
@@ -100,7 +101,7 @@ struct DbResult:
     ) raises:
         """Execute a query on a pool lease and own the materialized result."""
         self._lib = OwnedDLHandle(
-            "extensions/txpool_v0131/build/native/libmojara_txpool_mojo.so"
+            library_name("extensions/txpool_v0131/build/native/libmojara_txpool_mojo.so", "extensions/txpool_v0131/build/native/libmojara_txpool_mojo.dylib")
         )
         var result: Optional[Pointer[NoneType, MutUntrackedOrigin]] = None
         var call = self._lib.get_function[c_int]("mjx_query3")
@@ -180,7 +181,7 @@ struct DbLease:
     ) raises:
         """Bind a checked-out connection to its pool and acquiring thread."""
         self._lib = OwnedDLHandle(
-            "extensions/txpool_v0131/build/native/libmojara_txpool_mojo.so"
+            library_name("extensions/txpool_v0131/build/native/libmojara_txpool_mojo.so", "extensions/txpool_v0131/build/native/libmojara_txpool_mojo.dylib")
         )
         self._pool = pool
         self._token = 0
@@ -274,7 +275,7 @@ struct PooledDatabase:
         if capacity < 1 or capacity > 16:
             raise Error("Mojara pool size must be between 1 and 16")
         self._lib = OwnedDLHandle(
-            "extensions/txpool_v0131/build/native/libmojara_txpool_mojo.so"
+            library_name("extensions/txpool_v0131/build/native/libmojara_txpool_mojo.so", "extensions/txpool_v0131/build/native/libmojara_txpool_mojo.dylib")
         )
         var create = self._lib.get_function[
             Optional[Pointer[NoneType, MutUntrackedOrigin]]
@@ -298,7 +299,7 @@ struct PooledDatabase:
         if mysql_port < 1 or mysql_port > 65535:
             raise Error("Invalid MySQL TCP port")
         self._lib = OwnedDLHandle(
-            "extensions/txpool_v0131/build/native/libmojara_txpool_mojo.so"
+            library_name("extensions/txpool_v0131/build/native/libmojara_txpool_mojo.so", "extensions/txpool_v0131/build/native/libmojara_txpool_mojo.dylib")
         )
         var create = self._lib.get_function[
             Optional[Pointer[NoneType, MutUntrackedOrigin]]

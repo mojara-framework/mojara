@@ -2,6 +2,7 @@
 
 SqliteReadPool owns native connections to an existing database file, exposes
 read-only parameterized lookups and reports lease utilization."""
+from .platform import library_name
 from std.ffi import OwnedDLHandle, c_int
 
 
@@ -44,7 +45,7 @@ struct SqliteReadPool(Movable):
         if wait_ms < 1 or wait_ms > 30000:
             raise Error("SQLite pool wait timeout must be 1..30000 milliseconds")
         var owned = path.copy()
-        var lib = OwnedDLHandle("libmojara_sqlitepool.so")
+        var lib = OwnedDLHandle(library_name("libmojara_sqlitepool.so", "libmojara_sqlitepool.dylib"))
         var open_pool = lib.get_function[Int]("mj_sp_open")
         self._handle = open_pool(
             owned.as_c_string_span(), c_int(connections), c_int(wait_ms)
@@ -55,7 +56,7 @@ struct SqliteReadPool(Movable):
     def __deinit__(deinit self):
         if self._handle != 0:
             try:
-                var lib = OwnedDLHandle("libmojara_sqlitepool.so")
+                var lib = OwnedDLHandle(library_name("libmojara_sqlitepool.so", "libmojara_sqlitepool.dylib"))
                 var close_pool = lib.get_function[NoneType]("mj_sp_close")
                 close_pool(self._handle)
             except:
@@ -65,7 +66,7 @@ struct SqliteReadPool(Movable):
         """Prevent new leases. Existing queries can finish before pool cleanup."""
         if self._handle == 0:
             raise Error("SQLite read pool is already closed")
-        var lib = OwnedDLHandle("libmojara_sqlitepool.so")
+        var lib = OwnedDLHandle(library_name("libmojara_sqlitepool.so", "libmojara_sqlitepool.dylib"))
         var shutdown_fn = lib.get_function[c_int]("mj_sp_begin_shutdown")
         if shutdown_fn(self._handle) != 1:
             raise Error("Could not begin SQLite read pool shutdown")
@@ -80,7 +81,7 @@ struct SqliteReadPool(Movable):
         var totals = List[UInt64]()
         for _ in range(3):
             totals.append(0)
-        var lib = OwnedDLHandle("libmojara_sqlitepool.so")
+        var lib = OwnedDLHandle(library_name("libmojara_sqlitepool.so", "libmojara_sqlitepool.dylib"))
         var stats_fn = lib.get_function[c_int]("mj_sp_stats_extended")
         var ok = stats_fn(
             self._handle,
@@ -119,7 +120,7 @@ struct SqliteReadPool(Movable):
         var buffer = List[UInt8]()
         for _ in range(8192):
             buffer.append(0)
-        var lib = OwnedDLHandle("libmojara_sqlitepool.so")
+        var lib = OwnedDLHandle(library_name("libmojara_sqlitepool.so", "libmojara_sqlitepool.dylib"))
         var query_fn = lib.get_function[c_int]("mj_sp_query_one_text")
         var result = query_fn(
             self._handle,
@@ -154,7 +155,7 @@ def pooled_benchmark_lookup(path: String, connections: Int = 4) raises -> String
     var bytes = List[UInt8]()
     for _ in range(256):
         bytes.append(0)
-    var lib = OwnedDLHandle("libmojara_sqlitepool.so")
+    var lib = OwnedDLHandle(library_name("libmojara_sqlitepool.so", "libmojara_sqlitepool.dylib"))
     var fn_query = lib.get_function[c_int]("mj_sp_benchmark_lookup")
     var status = fn_query(
         owned.as_c_string_span(),

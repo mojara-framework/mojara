@@ -2,12 +2,13 @@
 
 Expose aggregate request metrics without recording individual request
 bodies, credentials or route-specific secret material."""
+from .platform import library_name
 from std.ffi import OwnedDLHandle
 
 
 def metrics_snapshot_json() raises -> String:
     """Return atomic-counter snapshot (non-transactional across fields)."""
-    var lib = OwnedDLHandle("libmojara_metrics.so")
+    var lib = OwnedDLHandle(library_name("libmojara_metrics.so", "libmojara_metrics.dylib"))
     var snapshot = lib.get_function[Int]("mj_metrics_snapshot_json")
     var address = snapshot()
     if address == 0:

@@ -18,7 +18,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: mojara-native-release-1.2.6
+  group: mojara-native-release-1.2.7
   cancel-in-progress: false
 
 jobs:
@@ -114,7 +114,7 @@ jobs:
           path: build/fresh-package-download
       - name: Validate package, SQL drivers and generated app on separate runner
         env:
-          MOJARA_PACKAGE_GLOB: "mojara-1.2.6-*.conda"
+          MOJARA_PACKAGE_GLOB: "mojara-1.2.7-*.conda"
           MOJARA_CI_PG_DSN: "host=127.0.0.1 port=5432 user=mojara password=mojara_ci dbname=mojara"
           MOJARA_CI_MYSQL_HOST: "127.0.0.1"
           MOJARA_CI_MYSQL_PASSWORD: "mojara_ci"
@@ -142,7 +142,7 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
-          mapfile -d '' ASSETS < <(find release-packages -type f -name 'mojara-1.2.6-*.conda' -print0)
+          mapfile -d '' ASSETS < <(find release-packages -type f -name 'mojara-1.2.7-*.conda' -print0)
           test "${#ASSETS[@]}" -eq 2
           test "$(printf '%s\n' "${ASSETS[@]##*/}" | sort -u | wc -l)" -eq 2
           : > SHA256SUMS
@@ -159,12 +159,12 @@ jobs:
             echo "Main moved during release qualification; refusing stale release" >&2
             exit 1
           }
-          if gh release view v1.2.6 >/dev/null 2>&1; then
-            echo "v1.2.6 already published; refusing automatic overwrite" >&2
+          if gh release view v1.2.7 >/dev/null 2>&1; then
+            echo "v1.2.7 already published; refusing automatic overwrite" >&2
             exit 1
           fi
           cat > RELEASE_NOTES.md <<'NOTES'
-          ## Mojara 1.2.6
+          ## Mojara 1.2.7
 
           Native Mojo web framework for Linux x86-64 and Linux ARM64.
           Both packages were compiled from first-party source, installed
@@ -172,13 +172,13 @@ jobs:
           prepared SQL and a generated HTTP application.
 
           Download the matching architecture .conda package and install:
-          `pixi global install --path /path/to/mojara-1.2.6-*.conda -c https://conda.modular.com/max/ -c conda-forge`
+          `pixi global install --path /path/to/mojara-1.2.7-*.conda -c https://conda.modular.com/max/ -c conda-forge`
 
           Verify checksums against SHA256SUMS. This GitHub Release is public;
           publishing the separate mojara.kasua.ng Conda channel index remains
           a separate deployment step.
           NOTES
-          mapfile -d '' ASSETS < <(find release-packages -type f -name 'mojara-1.2.6-*.conda' -print0)
-          gh release create v1.2.6 "${ASSETS[@]}" SHA256SUMS \
-            --target "$RELEASE_COMMIT" --title "Mojara 1.2.6" \
+          mapfile -d '' ASSETS < <(find release-packages -type f -name 'mojara-1.2.7-*.conda' -print0)
+          gh release create v1.2.7 "${ASSETS[@]}" SHA256SUMS \
+            --target "$RELEASE_COMMIT" --title "Mojara 1.2.7" \
             --notes-file RELEASE_NOTES.md --latest

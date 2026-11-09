@@ -4,6 +4,10 @@
  * All connection state belongs to a dedicated worker thread.
  * No process or thread is spawned per HTTP request.
  */
+#if defined(__APPLE__)
+/* Expose Darwin extensions such as arc4random_buf with POSIX feature macros. */
+#define _DARWIN_C_SOURCE 1
+#endif
 #define _POSIX_C_SOURCE 200809L
 #include <pthread.h>
 #include <stdint.h>
@@ -13,9 +17,23 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#if defined(__APPLE__)
+#include <stdlib.h>
+#else
 #include <sys/random.h>
+#endif
 #include <sqlite3.h>
 #include <libpq-fe.h>
+
+/* Use the platform's secure random generator for file/session identifiers. */
+static ssize_t mj_secure_random(void *buffer, size_t size) {
+#if defined(__APPLE__)
+    arc4random_buf(buffer, size);
+    return (ssize_t)size;
+#else
+    return getrandom(buffer, size, 0);
+#endif
+}
 
 typedef struct mj_mysql_result mj_mysql_result;
 extern void *mj_mysql_open(const char *, unsigned, const char *, const char *, const char *);
@@ -402,7 +420,7 @@ uint64_t mj_asyncdb_submit(mj_async_pool *p,const char *sql,
     int unique=0;
     for (int attempt=0;attempt<8 && !unique;attempt++) {
         uint64_t candidate=0;
-        if(getrandom(&candidate,sizeof(candidate),0)!=(ssize_t)sizeof(candidate))
+        if(mj_secure_random(&candidate,sizeof(candidate))!=(ssize_t)sizeof(candidate))
             break;
         candidate &= UINT64_C(0x7fffffffffffffff);
         if(!candidate)continue;

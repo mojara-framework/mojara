@@ -3,6 +3,7 @@
 Each MysqlConnection owns a native client handle. Bind user values using
 prepared parameters, and do not execute concurrent work on one connection."""
 
+from .platform import library_name
 from std.ffi import OwnedDLHandle, c_int
 from .postgres import PgRows
 
@@ -40,7 +41,7 @@ struct MysqlConnection(Movable):
         """Open one MySQL connection and retain its native client library."""
         self._handle = 0
         # Keep the client library open for the lifetime of the connection.
-        self._bridge = OwnedDLHandle("libmojara_mysql.so")
+        self._bridge = OwnedDLHandle(library_name("libmojara_mysql.so", "libmojara_mysql.dylib"))
         if port < 1 or port > 65535:
             raise Error("Invalid MySQL TCP port")
         if (

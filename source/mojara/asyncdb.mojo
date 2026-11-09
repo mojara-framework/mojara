@@ -4,6 +4,7 @@ AsyncDbPool executes parameterized queries on dedicated database workers.
 Handlers submit jobs without blocking and collect results from later requests
 using opaque identifiers. This is not a coroutine-suspension API."""
 
+from .platform import library_name
 from std.ffi import OwnedDLHandle, c_int
 from .config import DatabaseSettings
 
@@ -31,7 +32,7 @@ struct AsyncDbPool(Copyable):
         self._lib = None
         self._handle = 0
         self.driver = config.driver.copy()
-        self._lib = OwnedDLHandle("libmojara_asyncdb.so")
+        self._lib = OwnedDLHandle(library_name("libmojara_asyncdb.so", "libmojara_asyncdb.dylib"))
         if workers < 1 or workers > 16:
             raise Error("Async database workers must be between 1 and 16")
         if max_outstanding < workers or max_outstanding > 512:
@@ -86,7 +87,7 @@ struct AsyncDbPool(Copyable):
         self._handle = 0
         self.driver = copy.driver.copy()
         try:
-            var lib = OwnedDLHandle("libmojara_asyncdb.so")
+            var lib = OwnedDLHandle(library_name("libmojara_asyncdb.so", "libmojara_asyncdb.dylib"))
             var retain = lib.get_function[c_int]("mj_asyncdb_retain")
             if retain(copy._handle) == 1:
                 self._handle = copy._handle

@@ -12,7 +12,11 @@ SHA="838bb8d3404a8f481e2ec18236a539599dd66d151ae6a758675e6b4f1b893e02"
 if [ ! -f "$PKG" ]; then
   curl -fSL --retry 3 --connect-timeout 15 "$URL" -o "$PKG"
 fi
-echo "$SHA  $PKG" | sha256sum -c -
+if command -v sha256sum >/dev/null 2>&1; then
+  echo "$SHA  $PKG" | sha256sum -c -
+else
+  echo "$SHA  $PKG" | shasum -a 256 -c -
+fi
 python3 - "$PKG" "$WORK" <<'PY'
 import sys, zipfile, subprocess, pathlib, shutil
 pkg=pathlib.Path(sys.argv[1])
@@ -23,7 +27,10 @@ with zipfile.ZipFile(pkg) as archive:
     filename=next(n for n in archive.namelist() if n.startswith('pkg-') and n.endswith('.tar.zst'))
     tar=work/pathlib.Path(filename).name
     if not tar.is_file(): tar.write_bytes(archive.read(filename))
-subprocess.run(['tar','--use-compress-program=zstd','-xf',str(tar),'-C',str(staging)],check=True)
+with subprocess.Popen(['zstd','-dc',str(tar)],stdout=subprocess.PIPE) as decoder:
+    subprocess.run(['tar','-xf','-','-C',str(staging)],stdin=decoder.stdout,check=True)
+    decoder.stdout.close()
+    if decoder.wait(): raise SystemExit('Failed to decompress pinned Mojo source archive')
 sdk_sources=staging/'opt/mojara/lib/mojo'
 target=work/'sdk/lib/mojo'
 for module in ('flare','json','morph','sqlite'):

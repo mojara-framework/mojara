@@ -2,6 +2,7 @@
 
 Workers acquire exclusive native connections for single-column lookups.
 For writes or multi-statement transactions, use the database client."""
+from .platform import library_name
 from std.ffi import OwnedDLHandle, c_int
 from .config import DatabaseSettings
 
@@ -59,7 +60,7 @@ struct NetworkReadPool(Movable):
             packed.append(0)
         if len(packed) > 8192:
             raise Error("Database pool configuration exceeds native limit")
-        var lib = OwnedDLHandle("libmojara_networkpool.so")
+        var lib = OwnedDLHandle(library_name("libmojara_networkpool.so", "libmojara_networkpool.dylib"))
         var open_fn = lib.get_function[Int]("mj_np_open")
         self._handle = open_fn(
             c_int(native_driver),
@@ -74,7 +75,7 @@ struct NetworkReadPool(Movable):
     def __deinit__(deinit self):
         if self._handle != 0:
             try:
-                var lib = OwnedDLHandle("libmojara_networkpool.so")
+                var lib = OwnedDLHandle(library_name("libmojara_networkpool.so", "libmojara_networkpool.dylib"))
                 var close_fn = lib.get_function[NoneType]("mj_np_close")
                 close_fn(self._handle)
             except:
@@ -84,7 +85,7 @@ struct NetworkReadPool(Movable):
         """Irreversibly stop accepting new leases; active operations finish."""
         if self._handle == 0:
             raise Error("Database read pool is closed")
-        var lib = OwnedDLHandle("libmojara_networkpool.so")
+        var lib = OwnedDLHandle(library_name("libmojara_networkpool.so", "libmojara_networkpool.dylib"))
         var shutdown_fn = lib.get_function[c_int]("mj_np_begin_shutdown")
         if shutdown_fn(self._handle) != 1:
             raise Error("Database pool shutdown failed")
@@ -96,7 +97,7 @@ struct NetworkReadPool(Movable):
         var totals = List[UInt64]()
         for _ in range(9):
             totals.append(0)
-        var lib = OwnedDLHandle("libmojara_networkpool.so")
+        var lib = OwnedDLHandle(library_name("libmojara_networkpool.so", "libmojara_networkpool.dylib"))
         var stats_fn = lib.get_function[c_int]("mj_np_stats")
         if stats_fn(self._handle, totals.unsafe_ptr(), c_int(len(totals))) != 1:
             raise Error("Database read pool statistics unavailable")
@@ -135,7 +136,7 @@ struct NetworkReadPool(Movable):
         var bytes = List[UInt8]()
         for _ in range(8192):
             bytes.append(0)
-        var lib = OwnedDLHandle("libmojara_networkpool.so")
+        var lib = OwnedDLHandle(library_name("libmojara_networkpool.so", "libmojara_networkpool.dylib"))
         var query_fn = lib.get_function[c_int]("mj_np_query_one_text")
         var status = query_fn(
             self._handle,

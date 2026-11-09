@@ -2,6 +2,7 @@
 
 Handlers validate request-derived filenames and enforce filesystem bounds.
 Templates renders trusted files with explicit interpolation context."""
+from .platform import library_name
 from std.ffi import OwnedDLHandle, c_int
 from std.os import getenv
 from flare.http import Handler, Request
@@ -90,7 +91,7 @@ struct StaticFile(Copyable, Handler):
             bytes.append(0)
         var used = List[Int64]()
         used.append(0)
-        var lib = OwnedDLHandle("libmojara_web.so")
+        var lib = OwnedDLHandle(library_name("libmojara_web.so", "libmojara_web.dylib"))
         var read = lib.get_function[c_int]("mj_web_read_static")
         var result = read(
             root_owned.as_c_string_span(),
@@ -162,7 +163,7 @@ struct UploadFile(Copyable, Handler):
             filename.append(0)
         var file_bytes = List[Int64]()
         file_bytes.append(0)
-        var lib = OwnedDLHandle("libmojara_web.so")
+        var lib = OwnedDLHandle(library_name("libmojara_web.so", "libmojara_web.dylib"))
         var save = lib.get_function[c_int]("mj_web_store_multipart")
         var status = save(
             directory.as_c_string_span(),
@@ -287,7 +288,7 @@ struct UploadFiles(Copyable, Handler):
                 value = value // 256
         for i in range(policy.byte_length()):
             transfer[24 + i] = policy.as_bytes()[i]
-        var lib = OwnedDLHandle("libmojara_web.so")
+        var lib = OwnedDLHandle(library_name("libmojara_web.so", "libmojara_web.dylib"))
         var save = lib.get_function[c_int]("mj_web_store_multipart_multi_inline")
         var status = save(
             directory.as_c_string_span(),
