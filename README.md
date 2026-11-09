@@ -57,15 +57,15 @@ See [Architecture](docs/ARCHITECTURE.md) for component boundaries, [verified sou
 
 ## Platform status
 
-| Target | Current state |
+| Platform | Support |
 | --- | --- |
-| Linux x86-64 | **GitHub Release available**, native package and clean-host tests passed |
-| Windows 10/11 with WSL2 Ubuntu | **Supported** via Linux x86-64 |
-| Linux ARM64 | **GitHub Release available**, native package and clean-host tests passed; separate Conda channel publication pending |
-| macOS Apple Silicon | Experimental: CI target exists, full framework not certified |
-| Windows native | Not yet available; requires native Mojo compiler/runtime and Windows adapters |
+| Linux x86-64 | **Supported** |
+| Linux ARM64 (AArch64) | **Supported** |
+| Windows 10/11 with WSL2 Ubuntu (x86-64) | **Supported** |
+| macOS Apple Silicon | Experimental |
+| Windows native | Not yet supported |
 
-See [cross-platform progress](docs/CROSS-PLATFORM.md) and [Windows approach](docs/WINDOWS.md). CI badges are indicators of the named tests, **not** broad production certification.
+See [Windows setup](docs/WINDOWS.md) for installation guidance.
 
 ## Repository layout
 
