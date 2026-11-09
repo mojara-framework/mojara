@@ -26,7 +26,7 @@ macOS validation is manual while GitHub-hosted macOS runners are frequently queu
 | macOS Apple Silicon | Experimental |
 | Native Windows | Not yet supported |
 
-For release downloads, see the [Mojara 1.2.6 release](https://github.com/mojara-framework/mojara/releases/tag/v1.2.6). The separate hosted Conda channel is maintained independently; its deployment is tracked in [issue #12](https://github.com/mojara-framework/mojara/issues/12).
+For release downloads, see the [Mojara 1.2.6 release](https://github.com/mojara-framework/mojara/releases/tag/v1.2.6). The official Mojara Conda channel serves both Linux architectures.
 
 ## Native Mojo Windows
 

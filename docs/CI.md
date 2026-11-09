@@ -12,6 +12,10 @@ Mojara keeps portable CLI checks, native C regressions and platform experiments 
 
 These workflows run on relevant pushes and pull requests. They can also be run from the Actions tab without a local installation.
 
+## Public Conda distribution
+
+The [public channel install workflow](../.github/workflows/channel-install.yml) checks that Mojara installs by package name and serves HTTP on fresh Linux x86-64 and ARM64 runners.
+
 ## Optional macOS checks
 
 **macOS Apple Silicon validation (experimental)** runs only when requested manually. GitHub may queue the job until an Apple Silicon runner becomes available. A job in a queued state has not tested the project and must not be recorded as a compilation failure.

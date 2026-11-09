@@ -19,4 +19,4 @@ This is the minimum gate for publishing any new Mojara package. Passing the CLI-
 
 ## Current release
 
-Mojara **1.2.6** is publicly released with verified Linux x86-64 and ARM64 packages and SHA-256 checksums on GitHub. The custom Conda channel still needs the ARM64 package and updated index. Independent third-party source pinning, remaining overlinking diagnostics and macOS/native Windows qualification remain outstanding.
+Mojara **1.2.6** is publicly released with verified Linux x86-64 and ARM64 packages and SHA-256 checksums on GitHub. Both architectures are indexed in the hosted Conda channel. Independent third-party source pinning, remaining overlinking diagnostics and macOS/native Windows qualification remain outstanding.
