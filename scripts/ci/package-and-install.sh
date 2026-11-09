@@ -12,11 +12,12 @@ test -x "$SDK/bin/mojara"
 mkdir -p "$STAGE" "$OUT"
 cp -a "$SDK/." "$STAGE/"
 # All native libraries live under opt/mojara/lib while their Conda runtime
-# dependencies live under prefix/lib. Use relative RUNPATHs so a package
+# dependencies live under prefix/lib (or prefix/lib/mariadb for Connector/C).
+# Use relative RUNPATHs so a package
 # remains relocatable across Pixi and Conda environment directories.
 command -v patchelf >/dev/null || { echo 'patchelf is required for packaging' >&2; exit 2; }
 while IFS= read -r -d '' native; do
-  patchelf --set-rpath '$ORIGIN:$ORIGIN/../../../lib' "$native"
+  patchelf --set-rpath '$ORIGIN:$ORIGIN/../../../lib:$ORIGIN/../../../lib/mariadb' "$native"
 done < <(find "$STAGE/lib" -type f -name '*.so*' -print0)
 # Preserve the Mojo compiler runtime lookup metadata on the native CLI.
 # Rattler relocates that executable during package construction; overriding

@@ -26,6 +26,8 @@ while IFS= read -r -d '' binary; do
   if grep -q 'not found' <<< "$dependencies"; then
     echo "Missing native dependencies in installed package: $binary" >&2
     echo "$dependencies" >&2
+    echo "MariaDB connector runtime locations in fresh Pixi environment:" >&2
+    find "$PIXI_ENV_HOME" \( -type f -o -type l \) -name 'libmariadb.so*' -print >&2
     exit 1
   fi
   checked=$((checked + 1))
