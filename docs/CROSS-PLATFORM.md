@@ -21,7 +21,7 @@ macOS validation is manual while GitHub-hosted macOS runners are frequently queu
 | Target | CLI | Native regression tests | Full app | Production package |
 | --- | --- | --- | --- | --- |
 | Linux x86-64 | Verified | Verified | HTTP, SQL, sessions, uploads, WebSockets, concurrency and shutdown verified | **GitHub Release 1.2.6** |
-| Linux ARM64 | Verified | Verified | HTTP, signed sessions, multipart uploads, WebSockets, concurrent traffic, shutdown and live SQL verified | **GitHub Release 1.2.6**; custom Conda channel pending |
+| Linux ARM64 | Verified | Verified | HTTP, signed sessions, multipart uploads, WebSockets, concurrent traffic, shutdown and live SQL verified | **GitHub Release 1.2.6** |
 | macOS Apple Silicon | Runner-dependent | Not verified | Not verified | Not released |
 | Windows through WSL2 x86-64 | Existing Linux setup | Via Linux | Via Linux | Supported via Linux package |
 | Native Windows | No native Mojo toolchain yet | Not verified | Not verified | Not released |
