@@ -6,6 +6,7 @@ Mojara keeps portable CLI checks, native C regressions and platform experiments 
 
 1. **Mojara Linux portability CI** compiles the Mojo CLI and confirms that `mojara new` creates a normal application directory on Linux x86-64 and ARM64.
 2. **Native bridge regressions** compiles and runs C tests for static files, safe multipart uploads and concurrent telemetry on both Linux architectures.
+3. **Full Linux framework integration** checksum-verifies the published v1.2.5 dependency-source archive, rebuilds the platform-native C/C++ libraries, precompiles first-party Mojo source, builds and runs a generated HTTP app and checks live PostgreSQL/MariaDB prepared queries and transaction controls on real Linux x86-64 and ARM64 runners.
 
 Both run on relevant pushes and pull requests. They can also be run from the Actions tab without a local installation.
 
@@ -15,7 +16,7 @@ Both run on relevant pushes and pull requests. They can also be run from the Act
 
 ## Full application compatibility
 
-Not yet part of these CI gates: building all third-party libraries, precompiling the Mojara framework, compiling a generated app, HTTP/WebSocket requests, MySQL/PostgreSQL integration, load and shutdown tests on ARM64/macOS. These must be added before issuing platform packages.
+Not yet covered by the full integration workflow: HTTP WebSocket upgrades, end-to-end sessions/authentication and HTTP uploads, stress/load tests, graceful shutdown, full transaction-pool extension build, ARM64 Conda packaging and fresh installation, and macOS native SDK tests. The dependency bootstrap uses SHA-256-verified source from the published Linux x86-64 SDK, not independently pinned upstream repositories; native libraries and the application are rebuilt on each runner. These remaining gates must pass before publishing ARM64/macOS packages.
 
 ## Publishing
 

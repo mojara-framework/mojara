@@ -8,7 +8,8 @@
 - [x] Test native Mojo CLI and project generation on Linux x86-64 and ARM64.
 - [ ] Pin and reproduce all third-party Mojo and C dependencies from source.
 - [ ] Bring the missing transaction-pool bridge and core native extension sources into the source build.
-- [ ] Compile full native Mojo applications on Linux ARM64.
+- [x] Compile complete native Mojo framework, generated application and HTTP/static routes on Linux ARM64.
+- [x] Verify live Mojo PostgreSQL and MariaDB prepared queries and transaction controls on ARM64.
 - [ ] Complete HTTP, WebSocket, databases, uploads and shutdown integration checks on ARM64.
 - [ ] Compile the framework and all native bridges on Apple Silicon and run integration tests.
 - [ ] Publish and freshly install `linux-aarch64` and `osx-arm64` Conda packages.

@@ -8,6 +8,7 @@ Mojara is an open-source, Mojo-first web framework for routing, HTTP APIs, templ
 
 [![Native bridge regressions](https://github.com/mojara-framework/mojara/actions/workflows/native-bridge-regressions.yml/badge.svg)](https://github.com/mojara-framework/mojara/actions/workflows/native-bridge-regressions.yml)
 [![Cross-platform CLI checks](https://github.com/mojara-framework/mojara/actions/workflows/mojara-cross-platform.yml/badge.svg)](https://github.com/mojara-framework/mojara/actions/workflows/mojara-cross-platform.yml)
+[![Full Linux integration](https://github.com/mojara-framework/mojara/actions/workflows/full-linux-integration.yml/badge.svg)](https://github.com/mojara-framework/mojara/actions/workflows/full-linux-integration.yml)
 
 ## Install
 
@@ -49,7 +50,7 @@ See [Architecture](docs/ARCHITECTURE.md) for component boundaries, [verified sou
 | --- | --- |
 | Linux x86-64 | **Supported**, Mojara 1.2.5 |
 | Windows 10/11 with WSL2 Ubuntu | **Supported** via Linux x86-64 |
-| Linux ARM64 | Experimental: CLI/project generation passed CI; full framework not certified |
+| Linux ARM64 | **Experimental:** full native build, HTTP/static routes, live PostgreSQL and MariaDB Mojo tests passed in CI; WebSocket, load, deployment and install qualification pending |
 | macOS Apple Silicon | Experimental: CI target exists, full framework not certified |
 | Windows native | Not yet available; requires native Mojo compiler/runtime and Windows adapters |
 
