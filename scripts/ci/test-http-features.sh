@@ -16,7 +16,7 @@ export MOJARA_PORT=18786
 # This enables Mojara's EXISTING development WebSocket handler for this probe;
 # the test does not claim validation of a production custom WS application API.
 export MOJARA_DEV_RELOAD=1
-./app > "$WORK/server.log" 2>&1 &
+CONDA_PREFIX="$SDK" ./app > "$WORK/server.log" 2>&1 &
 PID=$!
 cleanup() {
   if kill -0 "$PID" 2>/dev/null; then kill -TERM "$PID" 2>/dev/null || true; fi
