@@ -310,14 +310,33 @@ struct UploadFiles(Copyable, Handler):
         var count = Int(transfer[config_bytes])
         for i in range(count):
             var base = records_offset + i * 200
+            # Native C writes fixed-size inline records. Copy their bytes
+            # through Mojo-visible Lists instead of constructing Strings
+            # directly from unsafe FFI pointers (which produced empty names).
+            var name_bytes = List[UInt8]()
+            for j in range(64):
+                var value = transfer[base + j]
+                if value == 0:
+                    break
+                name_bytes.append(value)
+            if len(name_bytes) != 43:
+                raise Error("Native multi-upload returned an invalid stored name")
             var name = String(
-                unsafe_from_utf8_ptr=Pointer[UInt8, MutUntrackedOrigin](
-                    unsafe_from_address=Int(transfer.unsafe_ptr()) + base
+                from_utf8=Span(
+                    unsafe_ptr=name_bytes.unsafe_ptr(), length=len(name_bytes)
                 )
             )
+            var mime_bytes = List[UInt8]()
+            for j in range(128):
+                var value = transfer[base + 64 + j]
+                if value == 0:
+                    break
+                mime_bytes.append(value)
+            if len(mime_bytes) == 0:
+                raise Error("Native multi-upload returned an empty MIME type")
             var mime = String(
-                unsafe_from_utf8_ptr=Pointer[UInt8, MutUntrackedOrigin](
-                    unsafe_from_address=Int(transfer.unsafe_ptr()) + base + 64
+                from_utf8=Span(
+                    unsafe_ptr=mime_bytes.unsafe_ptr(), length=len(mime_bytes)
                 )
             )
             var size: Int = 0
