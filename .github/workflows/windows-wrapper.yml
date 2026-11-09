@@ -1,0 +1,38 @@
+name: Windows WSL launcher syntax
+
+on:
+  push:
+    paths:
+      - 'scripts/windows/**'
+      - '.github/workflows/windows-wrapper.yml'
+  pull_request:
+    paths:
+      - 'scripts/windows/**'
+      - '.github/workflows/windows-wrapper.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  powershell-parse:
+    name: PowerShell launcher syntax only / Windows
+    runs-on: windows-2025
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parse Windows launcher without executing WSL
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $parseErrors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile(
+            (Resolve-Path 'scripts/windows/mojara.ps1').Path,
+            [ref]$tokens,
+            [ref]$parseErrors
+          )
+          if ($parseErrors.Count -gt 0) {
+            $parseErrors | Format-List | Out-String | Write-Error
+            exit 1
+          }
+          Write-Output 'PowerShell wrapper parses successfully. WSL integration is NOT tested.'
