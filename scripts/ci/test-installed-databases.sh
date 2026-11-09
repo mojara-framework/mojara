@@ -10,14 +10,19 @@ test -n "$SDK_BIN"
 export MOJARA_HOME="$(cd "$(dirname "$SDK_BIN")/.." && pwd -P)"
 export CONDA_PREFIX="$(cd "$MOJARA_HOME/../.." && pwd -P)"
 export PATH="$CONDA_PREFIX/bin:$PATH"
+# The compiler must locate its own standard library in the installed prefix.
+# A raw mojo invocation does not perform the CLI's environment initialization.
+export MODULAR_HOME="$CONDA_PREFIX/share/max"
+export MOJO_STDLIB="$CONDA_PREFIX/lib/mojo"
+test -s "$MOJO_STDLIB/std.mojoc"
 # The Mojo dynamic loading boundary uses LD_LIBRARY_PATH to discover the
 # framework-native bridge itself; verify-installed-links.sh first verifies
 # all the library dependencies without this override.
 export LD_LIBRARY_PATH="$MOJARA_HOME/lib:$CONDA_PREFIX/lib:$CONDA_PREFIX/lib/mariadb"
 BUILD="$ROOT/build/fresh-package-verify"
 mkdir -p "$BUILD"
-"$CONDA_PREFIX/bin/mojo" build -I "$MOJARA_HOME/lib/mojo" \
-  "$ROOT/tests/integration/databases.mojo" \
+"$CONDA_PREFIX/bin/mojo" build -I "$CONDA_PREFIX/lib/mojo" \
+  -I "$MOJARA_HOME/lib/mojo" "$ROOT/tests/integration/databases.mojo" \
   -o "$BUILD/installed-databases" -Xlinker=-ldl
 "$BUILD/installed-databases"
 echo "PASS: Installed package handles live PostgreSQL and MariaDB SQL on a clean runner"
