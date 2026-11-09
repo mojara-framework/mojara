@@ -4,7 +4,7 @@
 
 Mojara is an open-source, Mojo-first web framework for routing, HTTP APIs, templates, sessions, authentication, uploads, real-time applications, and relational databases. Applications are written in Mojo; performance-sensitive adapters use native C bridges.
 
-[Documentation](https://mojara.kasua.ng/docs/) · [Complete Mojara API reference](docs/API-REFERENCE.md) · [Installation](https://mojara.kasua.ng/docs/install.html) · [CLI guide](https://mojara.kasua.ng/docs/cli.html) · [Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md)
+[Documentation](https://mojara.kasua.ng/docs/) · [Complete Mojara API reference](docs/API-REFERENCE.md) · [Installation](https://mojara.kasua.ng/docs/install.html) · [Docker](docs/DOCKER.md) · [Build from source](docs/BUILD-FROM-SOURCE.md) · [CLI guide](https://mojara.kasua.ng/docs/cli.html) · [Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md)
 
 ## Install
 
@@ -29,6 +29,21 @@ mojara dev
 
 The `new` command creates an application directory directly, without an additional nested project or a project-level `pixi.toml`.
 
+## Docker
+
+Mojara is also available as a ready-to-use Docker image on Linux x86-64 and ARM64:
+
+```bash
+docker pull ghcr.io/mojara-framework/mojara:1.2.7
+docker run --rm ghcr.io/mojara-framework/mojara:1.2.7 version
+```
+
+The container includes Mojara, the Mojo compiler and build tools. You can generate, compile and run applications with bind-mounted project folders. See the [Docker installation and Compose guide](docs/DOCKER.md).
+
+## Compile the framework from GitHub
+
+Developers can build the full first-party Mojo framework and native CLI from the repository with the independently pinned upstream sources. Follow [Build Mojara from source](docs/BUILD-FROM-SOURCE.md). Normal users should use the published package or Docker image; cloning is only for contributing or building the framework itself.
+
 ## What it includes
 
 - Native Mojo CLI: project generation, development watching, compilation, local startup, diagnostics and deployment tooling.
@@ -48,7 +63,7 @@ See [Architecture](docs/ARCHITECTURE.md) for component boundaries, [verified sou
 | Linux ARM64 (AArch64) | **Supported** |
 | Windows 10/11 with WSL2 Ubuntu (x86-64) | **Supported** |
 | macOS Apple Silicon | **Supported** |
-| macOS Intel through Docker (Linux x86-64) | **Supported** |
+| macOS Intel through Docker / Linux VM (x86-64) | **Supported** |
 | Windows native | Not yet supported |
 
 See [macOS installation](docs/INSTALL-MACOS.md) and [Windows setup](docs/WINDOWS.md) for platform-specific guidance.
@@ -63,7 +78,7 @@ source/
 tests/native/             Executable native regression tests
 scripts/                  Source-development build/test commands
 packaging/conda/          Source-native multi-architecture Conda release recipe
-packaging/docker/         Intel Mac Docker-based Linux x86-64 environment
+packaging/docker/         Multiarchitecture Mojara Docker image
 docs/                     Tutorials, complete Mojara API reference and release process
 .github/workflows/        Platform matrix and native regression CI
 ```
