@@ -9,7 +9,22 @@ mojo = "==1.2.0"
 watchexec = ">=2.7,<3"
 # Required to compile the published JSON Mojo FFI wrapper from source.
 simdjson = ">=4.6.0,<5"
-# Compile native bridges against Conda libraries, not Ubuntu's host headers.
+[target.linux-64.dependencies]
+# Native Linux bridges must link to Conda libraries, not runner system libs.
+libpq = "*"
+mariadb-connector-c = "*"
+openssl = ">=3"
+sqlite = "*"
+zlib = "*"
+libdeflate = "*"
+brotli = "*"
+libsodium = "*"
+libgcc-ng = "*"
+libstdcxx-ng = "*"
+pkg-config = "*"
+
+[target.linux-aarch64.dependencies]
+# Native Linux bridges must link to Conda libraries, not runner system libs.
 libpq = "*"
 mariadb-connector-c = "*"
 openssl = ">=3"
