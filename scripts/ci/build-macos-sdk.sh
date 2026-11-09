@@ -65,6 +65,23 @@ for module in ("flare", "json"):
         if "dylibcket" in patched or "dylibrt_keys" in patched:
             raise SystemExit(f"Invalid macOS FFI source patch: {source}")
 print("Adjusted native-library suffixes in macOS upstream modules:", changed)
+
+# Flare's optional Linux-only worker balancing uses eventfd_write, which
+# Darwin does not export. This feature is already disabled on non-Linux
+# targets; compile its wake helper out of the macOS working source as well.
+balance = root / "flare" / "runtime" / "_balance.mojo"
+content = balance.read_text()
+old_wake = '''    if fd <= 0:
+        return
+    _ = external_call["eventfd_write", c_int](c_int(fd), UInt64(1))'''
+new_wake = '''    comptime if CompilationTarget.is_linux():
+        if fd <= 0:
+            return
+        _ = external_call["eventfd_write", c_int](c_int(fd), UInt64(1))'''
+if old_wake not in content:
+    raise SystemExit("Expected Flare Linux-only eventfd wake function not found")
+balance.write_text(content.replace(old_wake, new_wake, 1))
+print("Disabled unavailable Linux eventfd symbol on macOS")
 PY
 
 export MOJARA_HOME="$SDK"
