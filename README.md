@@ -4,7 +4,7 @@
 
 Mojara is an open-source, Mojo-first web framework for routing, HTTP APIs, templates, sessions, authentication, uploads, real-time applications, and relational databases. Applications are written in Mojo; performance-sensitive adapters use native C bridges.
 
-[Documentation](https://mojara.kasua.ng/docs/) · [Installation](https://mojara.kasua.ng/docs/install.html) · [CLI guide](https://mojara.kasua.ng/docs/cli.html) · [Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md)
+[Documentation](https://mojara.kasua.ng/docs/) · [Complete Mojara API reference](docs/API-REFERENCE.md) · [Installation](https://mojara.kasua.ng/docs/install.html) · [CLI guide](https://mojara.kasua.ng/docs/cli.html) · [Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md)
 
 [![Native bridge regressions](https://github.com/mojara-framework/mojara/actions/workflows/native-bridge-regressions.yml/badge.svg)](https://github.com/mojara-framework/mojara/actions/workflows/native-bridge-regressions.yml)
 [![Cross-platform CLI checks](https://github.com/mojara-framework/mojara/actions/workflows/mojara-cross-platform.yml/badge.svg)](https://github.com/mojara-framework/mojara/actions/workflows/mojara-cross-platform.yml)
@@ -50,7 +50,7 @@ See [Architecture](docs/ARCHITECTURE.md) for component boundaries, [verified sou
 | --- | --- |
 | Linux x86-64 | **Supported**, Mojara 1.2.5 |
 | Windows 10/11 with WSL2 Ubuntu | **Supported** via Linux x86-64 |
-| Linux ARM64 | **Experimental:** full native build, HTTP/static routes, live PostgreSQL and MariaDB Mojo tests passed in CI; WebSocket, load, deployment and install qualification pending |
+| Linux ARM64 | **CI-qualified candidate (unpublished):** native build, HTTP, signed sessions, uploads, WebSockets, concurrent traffic, PostgreSQL/MariaDB and clean-runner package installation pass; not yet a public release |
 | macOS Apple Silicon | Experimental: CI target exists, full framework not certified |
 | Windows native | Not yet available; requires native Mojo compiler/runtime and Windows adapters |
 
@@ -66,7 +66,7 @@ source/
 tests/native/             Executable native regression tests
 scripts/                  Source-development build/test commands
 packaging/conda/          Conda recipe from the 1.2.5 release
-docs/                     Architecture, contributing and release process
+docs/                     Tutorials, complete Mojara API reference and release process
 .github/workflows/        Platform matrix and native regression CI
 ```
 

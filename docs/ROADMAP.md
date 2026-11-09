@@ -10,7 +10,9 @@
 - [ ] Bring the missing transaction-pool bridge and core native extension sources into the source build.
 - [x] Compile complete native Mojo framework, generated application and HTTP/static routes on Linux ARM64.
 - [x] Verify live Mojo PostgreSQL and MariaDB prepared queries and transaction controls on ARM64.
-- [ ] Complete HTTP, WebSocket, databases, uploads and shutdown integration checks on ARM64.
+- [x] Complete HTTP, WebSocket, databases, uploads and shutdown integration checks on ARM64.
+- [x] Build and fresh-install unpublished native Conda candidates for Linux x86-64 and ARM64, including clean-runner application smoke tests.
+- [ ] Eliminate unresolved shared-library dependencies and document native package relocation requirements.
 - [ ] Compile the framework and all native bridges on Apple Silicon and run integration tests.
 - [ ] Publish and freshly install `linux-aarch64` and `osx-arm64` Conda packages.
 - [ ] Add reproducible, signed/checksummed multi-platform release automation.
@@ -26,6 +28,7 @@
 ## Project stewardship
 
 - [ ] Establish API-compatibility expectations and semantic versioning policy.
+- [x] Document first-party module and public function signatures in a complete Mojara source API reference.
 - [ ] Publish tutorial-driven documentation and functional reference examples.
 - [ ] Require CI and review before stable release publishing.
 
