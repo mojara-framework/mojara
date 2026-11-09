@@ -58,12 +58,14 @@ for module in ("flare", "json"):
         content = source.read_text()
         # Match the ELF library extension, not identifiers such as ".socket"
         # or ".sort_keys". Versioned library names are handled separately.
-        patched = re.sub(r"\\.so(?![A-Za-z0-9_.])", ".dylib", content)
+        patched = re.sub(r"\.so(?![A-Za-z0-9_.])", ".dylib", content)
         if patched != content:
             source.write_text(patched)
             changed += 1
         if "dylibcket" in patched or "dylibrt_keys" in patched:
             raise SystemExit(f"Invalid macOS FFI source patch: {source}")
+if changed < 10:
+    raise SystemExit("No macOS native-library suffixes converted; source patch invalid")
 print("Adjusted native-library suffixes in macOS upstream modules:", changed)
 
 # Flare's optional Linux-only worker balancing uses eventfd_write, which
