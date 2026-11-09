@@ -12,6 +12,7 @@ rattler-build build -r "$ROOT/packaging/conda/recipe.yaml" \
   -c https://conda.modular.com/max/ -c conda-forge --output-dir "$OUT"
 PACKAGE="$(find "$OUT" -type f -name 'mojara-1.2.7-*.conda' -print -quit)"
 test -s "$PACKAGE" || { echo "Missing Mojara release package" >&2; exit 1; }
+bash "$ROOT/scripts/ci/audit-release-abi.sh" "$PACKAGE"
 file "$PACKAGE"
 sha256sum "$PACKAGE"
 echo "RELEASE_PACKAGE=$PACKAGE"
