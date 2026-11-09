@@ -41,7 +41,7 @@ The `new` command creates an application directory directly, without an addition
 - Async database jobs, connection pools, telemetry and lifecycle controls.
 - Flare-based network stack for HTTP, WebSockets and streaming.
 
-See [Architecture](docs/ARCHITECTURE.md) for component boundaries and third-party dependencies.
+See [Architecture](docs/ARCHITECTURE.md) for component boundaries, [verified source provenance](docs/SOURCE-PROVENANCE.md), and third-party dependencies.
 
 ## Platform status
 
@@ -74,5 +74,7 @@ docs/                     Architecture, contributing and release process
 ## Development and community
 
 Start with [Contributing](CONTRIBUTING.md), [Support](SUPPORT.md), and the [Roadmap](docs/ROADMAP.md). Report reproducible problems through [Issues](https://github.com/mojara-framework/mojara/issues). For vulnerabilities, follow [Security](SECURITY.md).
+
+Before resetting Windows/WSL2, follow the [safe WSL backup and Mojara reinstall procedure](docs/WSL-RESET.md).
 
 Released under the [MIT License](LICENSE). Third-party components retain their own licenses; see [third-party notices](docs/THIRD_PARTY_LICENSES.md).
