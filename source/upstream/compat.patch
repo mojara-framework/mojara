@@ -1,0 +1,1586 @@
+--- a/flare/__init__.mojo
++++ b/flare/__init__.mojo
+@@ -36,7 +36,7 @@
+ fuzz harnesses across the tree, 9M+ runs combined, zero known crashes), and a ``Cancel`` token plumbed to handlers via
+ ``CancelHandler``. ``num_workers=1`` is a single-threaded
+ reactor; ``num_workers=N`` with ``N >= 2`` runs N
+-workers behind per-worker ``SO_REUSEPORT`` listeners by default
++workers (on Mojo's AsyncRT pool) behind per-worker ``SO_REUSEPORT`` listeners by default
+ (matches actix_web's listener strategy and gives the highest
+ steady-state throughput). Set ``FLARE_REUSEPORT_WORKERS=0`` to
+ opt into the single shared listener with ``EPOLLEXCLUSIVE`` --
+--- a/flare/http/_reactor/conn_handle.mojo
++++ b/flare/http/_reactor/conn_handle.mojo
+@@ -408,8 +408,7 @@
+             stream: Accepted ``TcpStream`` (non-blocking mode must already
+                 be set by the caller). Ownership transfers into the
+                 ``ConnHandle``.
+-            read_buffer_size: Unused; the read buffer is allocated on the
+-                first recv so an idle keep-alive connection holds none.
++            read_buffer_size: Initial capacity for the read buffer.
+         """
+         # Capture the peer address before moving the stream — ``peer_addr``
+         # reads from the stream's internal field, which becomes
+@@ -418,7 +417,7 @@
+         self._stream = stream^
+         self.cancel_cell = CancelCell()
+         self.state = STATE_READING
+-        self.read_buf = List[UInt8]()
++        self.read_buf = List[UInt8](capacity=read_buffer_size)
+         self.headers_end = -1
+         self.content_length = 0
+         self.body_total = -1
+--- a/flare/http/_reactor/keepalive_scan.mojo
++++ b/flare/http/_reactor/keepalive_scan.mojo
+@@ -329,9 +329,7 @@
+     if drop_n >= n:
+         # Either exactly consumed (drop_n == n) or over-consumed
+         # (defensive). Either way the buffer is empty after this.
+-        # Reassign instead of clear() so the capacity is freed and an idle
+-        # keep-alive connection holds no read buffer between requests.
+-        read_buf = List[UInt8]()
++        read_buf.clear()
+         return
+     var keep = n - drop_n
+     # Non-overlapping memcpy from old buffer into a fresh
+--- a/flare/http/client.mojo
++++ b/flare/http/client.mojo
+@@ -217,7 +217,7 @@
+     """QUIC connections dialled over this client's lifetime."""
+ 
+ 
+-comptime FLARE_VERSION: String = "0.13.1"
++comptime FLARE_VERSION: String = "0.13.0"
+ """The library version, as reported in the default ``User-Agent``.
+ 
+ Bump alongside ``pixi.toml`` and ``recipe.yaml`` at release."""
+@@ -1802,11 +1802,7 @@
+         """
+         var u = Url.parse(self._resolve_url(req.url))
+         var headers = prepare_stream_headers(
+-            req.method,
+-            u,
+-            req.headers,
+-            self._user_agent,
+-            len(req.body) if len(req.body) > 0 else -1,
++            req.method, u, req.headers, self._user_agent
+         )
+         if self._auth_header != "":
+             headers.set("authorization", self._auth_header)
+@@ -1818,8 +1814,8 @@
+                 headers.set("cookie", cookie)
+ 
+         if u.is_tls():
+-            return self._stream_tls(u, req.method, headers^, req.body)
+-        return self._stream_cleartext(u, req.method, headers^, req.body)
++            return self._stream_tls(u, req.method, headers^)
++        return self._stream_cleartext(u, req.method, headers^)
+ 
+     def _stream_head_wire(
+         self, method: String, u: Url, headers: HeaderMap, default_port: Int
+@@ -1837,11 +1833,7 @@
+         return wire^
+ 
+     def _stream_cleartext(
+-        self,
+-        u: Url,
+-        method: String,
+-        var headers: HeaderMap,
+-        body: List[UInt8],
++        self, u: Url, method: String, var headers: HeaderMap
+     ) raises -> HttpStreamResponse:
+         """Open a cleartext streaming response, h2c or HTTP/1.1."""
+         var wire = self._stream_head_wire(method, u, headers, 80)
+@@ -1863,22 +1855,15 @@
+                 method,
+                 headers^,
+                 String("http"),
+-                body,
+             )
+         var wb = wire.as_bytes()
+         tcp.write_all(Span[UInt8, _](wb))
+-        if len(body) > 0:
+-            tcp.write_all(Span[UInt8, _](body))
+         var t = _H2Transport.from_tcp(tcp^)
+         var dl = HttpDownload[_H2Transport](t^, method.upper())
+         return self._wrap_h1(dl^, String("http/1.1"))
+ 
+     def _stream_tls(
+-        self,
+-        u: Url,
+-        method: String,
+-        var headers: HeaderMap,
+-        body: List[UInt8],
++        self, u: Url, method: String, var headers: HeaderMap
+     ) raises -> HttpStreamResponse:
+         """Open a streaming response over TLS, h2 or HTTP/1.1 by ALPN."""
+         var wire = self._stream_head_wire(method, u, headers, 443)
+@@ -1904,12 +1889,9 @@
+                 method,
+                 headers^,
+                 String("https"),
+-                body,
+             )
+         var wb = wire.as_bytes()
+         stream.write_all(Span[UInt8, _](wb))
+-        if len(body) > 0:
+-            stream.write_all(Span[UInt8, _](body))
+         var t = _H2Transport.from_tls(stream^)
+         var dl = HttpDownload[_H2Transport](t^, method.upper())
+         return self._wrap_h1(dl^, String("http/1.1"))
+@@ -1931,7 +1913,6 @@
+         method: String,
+         var headers: HeaderMap,
+         scheme: String,
+-        body: List[UInt8],
+     ) raises -> HttpStreamResponse:
+         """Open an h2 stream and read its head, leaving the body unread.
+ 
+@@ -1941,7 +1922,6 @@
+             method: Request method.
+             headers: Request headers, already vetted.
+             scheme: ``"https"`` after ALPN, ``"http"`` for h2c.
+-            body: Request body, sent as DATA after the headers.
+         """
+         var conn = Http2ClientConnection()
+         var preface = conn.drain()
+@@ -1959,10 +1939,7 @@
+             u.request_target(),
+             extra,
+         )
+-        if len(body) > 0:
+-            conn.send_data(sid, Span[UInt8, _](body), True)
+-        else:
+-            conn.finish_upload(sid)
++        conn.finish_upload(sid)
+         conn.enable_response_streaming(sid)
+         var out = conn.drain()
+         if len(out) > 0:
+--- a/flare/net/_libc.mojo
++++ b/flare/net/_libc.mojo
+@@ -33,7 +33,6 @@
+ from std.os import getenv
+ 
+ from ..utils.dylib import find_flare_lib
+-from .cstr import CSTR_PASS, EMPTY_REJECT, c_str_verdict
+ from ._libc_cloexec import (
+     F_GETFD,
+     F_SETFD,
+@@ -827,7 +826,7 @@
+     host: String,
+     hints: Pointer[UInt8, _],
+     res_slot: Pointer[UInt8, _],
+-) raises -> c_int:
++) -> c_int:
+     """Wrapper around ``getaddrinfo(3)``.
+ 
+     Resolves *host* with no service constraint (port is not set). The caller
+@@ -844,8 +843,6 @@
+     Returns:
+         0 on success, non-zero ``EAI_*`` error code on failure.
+     """
+-    if c_str_verdict(host.as_bytes(), EMPTY_REJECT) != CSTR_PASS:
+-        raise Error("getaddrinfo host: empty or contains a NUL byte")
+     var host_copy = host
+     return external_call["getaddrinfo", c_int](
+         host_copy.as_c_string_span(),
+@@ -906,9 +903,6 @@
+     Returns:
+         1 on success, 0 if the input is not valid, -1 on error.
+     """
+-    # An empty address, or one C would read cut short at a NUL, is invalid.
+-    if c_str_verdict(src.as_bytes(), EMPTY_REJECT) != CSTR_PASS:
+-        return 0
+     # as_c_string_span() is mutating; copy into a local var first.
+     var src_copy = src
+     return external_call["inet_pton", c_int](
+--- a/flare/runtime/_asyncrt.mojo
++++ b/flare/runtime/_asyncrt.mojo
+@@ -25,8 +25,19 @@
+ pool (a parent that blocked its worker outright would deadlock once
+ every worker held a parent waiting on a queued child). The cost is
+ that a donating waiter may pick up any queued task. For a short task
+-that only delays the waiter; for a task that never returns it would never
+-get back, so such tasks do not belong on the pool (see below).
++that only delays the waiter; for a serving loop that never returns it
++would never get back. So serving loops (``Scheduler`` and WebSocket
++workers) are started with ``wait_started``: the spawner waits until
++every loop is running, so none is ever sitting in the queue where a
++waiter could take it.
++
++A serving loop also holds its worker until shutdown, and the pool does
++not grow. Loops therefore take a lease first (``asyncrt_try_lease``):
++at most ``parallelism_level() - 1`` across the process, so one worker
++is always left for short tasks. A loop that finds no lease free runs on
++a dedicated OS thread, the way every worker did before AsyncRT, so
++asking for more workers than the pool holds (or starting several
++servers) neither fails nor hangs.
+ 
+ A forked child has no pool. ``fork`` copies only the calling thread,
+ so the child inherits AsyncRT's queue but none of its workers: a task
+@@ -42,11 +53,9 @@
+ Things that must not run here, and use ``ThreadHandle.spawn_os``
+ instead:
+ 
+-- Anything that never returns, serving loops included. Process exit
+-  releases the AsyncRT device, which shuts the work queue down and
+-  waits for running tasks, so a task that loops forever hangs exit. A
+-  loop that holds a pool worker also stalls every other user of the
+-  pool: a stdlib ``parallelize`` never finishes while it runs.
++- Anything that never returns. Process exit releases the AsyncRT
++  device, which shuts the work queue down and waits for running
++  tasks, so a task that loops forever hangs exit.
+ - Anything that lives as long as a connection. The pool has a fixed
+   number of workers (it does not grow when a task blocks), so one
+   task per connection starves it.
+@@ -127,12 +136,14 @@
+ 
+ 
+ def _asyncrt_trampoline[
+-    start: def(_OpaquePtr) thin -> _OpaquePtr
++    start: def(_OpaquePtr) thin -> _OpaquePtr, leased: Bool
+ ](cell_ptr: _OpaquePtr):
+     """AsyncRT work item: run ``start(arg)``, then publish completion.
+ 
+     Must not raise: it runs on an AsyncRT worker with no error channel,
+-    the same contract as a pthread start routine.
++    the same contract as a pthread start routine. A ``leased`` task
++    (a serving loop, see ``asyncrt_try_lease``) gives its lease back as
++    soon as ``start`` returns.
+ 
+     The state CAS comes before the chain completes. After
+     ``RUNNING -> DONE`` the joiner owns the cell and may free it as soon
+@@ -148,6 +159,8 @@
+     )
+     var arg_addr = Int(_load(cell, _CELL_ARG))
+     _ = start(_OpaquePtr(unsafe_from_address=arg_addr))
++    comptime if leased:
++        asyncrt_release_lease()
+     if _cas_state(cell, _STATE_RUNNING, _STATE_DONE):
+         _chain_complete(cell)
+     else:
+@@ -159,13 +172,16 @@
+ 
+ 
+ def asyncrt_spawn[
+-    start: def(_OpaquePtr) thin -> _OpaquePtr
++    start: def(_OpaquePtr) thin -> _OpaquePtr, leased: Bool = False
+ ](arg: _OpaquePtr) -> UInt64:
+     """Enqueue ``start(arg)`` on the AsyncRT pool.
+ 
+     Returns the task cell's address, which the ``ThreadHandle`` stores
+     in place of a ``pthread_t``. Never fails: the work queue is
+-    unbounded, and the task runs once a pool worker is free.
++    unbounded, and the task runs once a pool worker is free. With
++    ``leased`` the caller already holds a lease from
++    ``asyncrt_try_lease``, and the task releases it when ``start``
++    returns.
+     """
+     var raw = alloc(Layout[Int64](count=_CELL_SLOTS)).unsafe_leak()
+     for i in range(_CELL_SLOTS):
+@@ -183,7 +199,7 @@
+         _OpaquePtr,
+         Int,
+     ](
+-        _asyncrt_trampoline[start],
++        _asyncrt_trampoline[start, leased],
+         _OpaquePtr(unsafe_from_address=cell),
+         -1,
+     )
+@@ -360,3 +376,59 @@
+             file=stderr,
+         )
+     return alive
++
++
++def asyncrt_worker_capacity() -> Int:
++    """Pool workers flare may hold with long-lived tasks (serving loops),
++    across the whole process.
++
++    One below the pool size, so at least one worker stays free for
++    short tasks (``block_in_pool``, DNS, the H3/H2 race) and for
++    whatever else in the process uses AsyncRT. Never below 1.
++    """
++    var n = parallelism_level() - 1
++    return n if n >= 1 else 1
++
++
++# ── Serving-loop leases ─────────────────────────────────────────────────────
++# One process-global Int64: pool workers currently held by serving loops.
++# Process-wide, so two servers side by side can't exhaust the pool together.
++
++
++def _lease_cell_init() -> OptionalPointer[NoneType, UntrackedOrigin[mut=True]]:
++    var raw = alloc(Layout[Int64](count=1)).unsafe_leak()
++    raw.unsafe_write(Int64(0))
++    return Pointer[NoneType, UntrackedOrigin[mut=True]](
++        unsafe_from_address=Int(raw)
++    )
++
++
++def _lease_cell() -> Int:
++    var p = _get_global[
++        "flare_asyncrt_leases", _lease_cell_init, _pool_cell_destroy
++    ]()
++    return Int(p.value())
++
++
++def asyncrt_try_lease() -> Bool:
++    """Claim one of the ``asyncrt_worker_capacity()`` pool workers for a
++    serving loop. False when they are all held; the caller then runs the
++    loop on a dedicated OS thread instead.
++    """
++    var cell = _lease_cell()
++    var cap = Int64(asyncrt_worker_capacity())
++    var held = _load(cell, 0)
++    while held < cap:
++        if Atomic[Int64].compare_exchange(_slot(cell, 0), held, held + 1):
++            return True
++    return False
++
++
++def asyncrt_release_lease():
++    """Give back a lease taken by ``asyncrt_try_lease``."""
++    _ = Atomic[Int64].fetch_add(_slot(_lease_cell(), 0), -1)
++
++
++def asyncrt_leases_held() -> Int:
++    """Pool workers currently held by serving loops."""
++    return Int(_load(_lease_cell(), 0))
+--- a/flare/runtime/_balance.mojo
++++ b/flare/runtime/_balance.mojo
+@@ -140,11 +140,7 @@
+     """Make a sleeping ``Reactor.poll`` on the eventfd ``fd`` return."""
+     if fd <= 0:
+         return
+-    # Linux only, like the group: ``eventfd_write`` does not exist on macOS,
+-    # and an unguarded call leaves it undefined at link time even though no
+-    # balancer is ever enabled there.
+-    comptime if CompilationTarget.is_linux():
+-        _ = external_call["eventfd_write", c_int](c_int(fd), UInt64(1))
++    _ = external_call["eventfd_write", c_int](c_int(fd), UInt64(1))
+ 
+ 
+ struct Balancer(Copyable, ImplicitlyCopyable):
+--- a/flare/runtime/_thread.mojo
++++ b/flare/runtime/_thread.mojo
+@@ -29,11 +29,13 @@
+ 
+ Thread engine. ``spawn`` enqueues a task on Mojo's AsyncRT pool
+ (``flare.runtime._asyncrt``), the same pool the stdlib uses, so a flare
+-process has one thread engine for short tasks. ``spawn_os`` creates a
++process has one thread engine. ``spawn_serving`` does the same for
++server workers while a serving lease is free. ``spawn_os`` creates a
+ dedicated OS thread, for the work a fixed-size pool can't host: threads
+-that never return (every serving loop), threads that live as long as a
+-connection, and every spawn in a forked child, which has no pool
+-workers. Both kinds share ``join`` / ``detach`` / the move-only handle.
++that never return, threads that live as long as a connection, serving
++loops beyond the pool's capacity, and every spawn in a forked child,
++which has no pool workers. All kinds share ``join`` / ``detach`` / the
++move-only handle.
+ 
+ This file is *internal* — it is used by the runtime, the WebSocket
+ server, async DNS and the H3/H2 connect race.
+@@ -54,6 +56,7 @@
+     asyncrt_join,
+     asyncrt_pool_alive,
+     asyncrt_spawn,
++    asyncrt_try_lease,
+     asyncrt_wait_started,
+ )
+ 
+@@ -156,6 +159,36 @@
+         if asyncrt_pool_alive():
+             return ThreadHandle(
+                 _thread_id=asyncrt_spawn[start](arg), _kind=_KIND_ASYNCRT
++            )
++        return ThreadHandle.spawn_os[start](arg)
++
++    @staticmethod
++    def spawn_serving[
++        start: def(_OpaquePtr) thin -> _OpaquePtr
++    ](arg: _OpaquePtr,) raises -> ThreadHandle:
++        """Run a serving loop: ``start(arg)`` returns only at shutdown.
++
++        A pool task while a serving lease is free (see
++        ``asyncrt_try_lease``), otherwise a dedicated OS thread. Call
++        ``wait_started`` on every handle before letting anything else
++        join on the pool.
++
++        Parameters:
++            start: Entry function; same contract as ``spawn_os``.
++
++        Args:
++            arg: Opaque pointer delivered to the start function.
++
++        Returns:
++            A handle the caller must ``join()`` or ``detach()``.
++
++        Raises:
++            Error: If ``pthread_create`` fails (OS-thread case only).
++        """
++        if asyncrt_pool_alive() and asyncrt_try_lease():
++            return ThreadHandle(
++                _thread_id=asyncrt_spawn[start, leased=True](arg),
++                _kind=_KIND_ASYNCRT,
+             )
+         return ThreadHandle.spawn_os[start](arg)
+ 
+@@ -282,8 +315,9 @@
+         A no-op for a pthread, which is running as soon as ``spawn``
+         returns. An AsyncRT task sits in the pool's queue until a worker
+         takes it, and a joiner elsewhere that donates its worker while
+-        waiting could take a queued task. A caller that must know the task
+-        has begun, and is not left in the queue, calls this.
++        waiting could take a queued task. Spawners of tasks that never
++        return on their own (serving loops) call this for each one so
++        none is left in the queue for a donating waiter to run inline.
+         """
+         if self._kind == _KIND_ASYNCRT and self._thread_id != 0:
+             asyncrt_wait_started(self._thread_id)
+@@ -358,9 +392,9 @@
+     """Snapshot the calling thread's CPU mask, for
+     :func:`restore_thread_affinity`.
+ 
+-    A task that pins the pool worker it runs on restores the worker's
+-    mask when it returns, so later tasks on that worker are not pinned.
+-    Returns the address of a heap ``cpu_set_t``, or 0 when there
++    A serving loop that pins the pool worker it runs on restores the
++    worker's mask when it returns, so later tasks on that worker are not
++    pinned. Returns the address of a heap ``cpu_set_t``, or 0 when there
+     is nothing to restore (macOS, or ``pthread_getaffinity_np`` failed).
+     """
+     comptime if CompilationTarget.is_linux():
+--- a/flare/runtime/_worker.mojo
++++ b/flare/runtime/_worker.mojo
+@@ -124,9 +124,10 @@
+     # Linux an overly-ambitious CPU index might raise. Pinning
+     # happens from the worker itself via pthread_self, so we
+     # re-wrap the current thread id into a ThreadHandle just to
+-    # reuse the ``pin_to_cpu`` helper. The thread is a dedicated OS
+-    # thread (serving loops never run on the AsyncRT pool); the mask is
+-    # still put back before the loop returns.
++    # reuse the ``pin_to_cpu`` helper. This thread is usually a shared
++    # AsyncRT pool worker; the serving loop holds it until shutdown,
++    # so pinning it is safe as long as the original mask is put back
++    # before the task returns.
+     var saved_mask = 0
+     if ctx_ptr[].pin_cores:
+         saved_mask = save_thread_affinity()
+--- a/flare/runtime/scheduler.mojo
++++ b/flare/runtime/scheduler.mojo
+@@ -584,7 +584,7 @@
+ 
+             var spawned = False
+             try:
+-                var th = ThreadHandle.spawn_os[_worker_entry[Self.F]](arg)
++                var th = ThreadHandle.spawn_serving[_worker_entry[Self.F]](arg)
+                 # Move the (non-Copyable) handle into the next slot
+                 # of the worker array; bump the live-slot counter.
+                 s._workers_ptr.unsafe_offset(s._workers_len).unsafe_write(th^)
+@@ -643,6 +643,11 @@
+                 s._stopping_addr = 0
+                 raise Error("pthread_create failed in Scheduler.start")
+ 
++        # Workers holding a lease are pool tasks. Don't hand back the
++        # scheduler while one is still queued: a donating join elsewhere
++        # could run it inline and never return. No-op for OS threads.
++        for i in range(s._workers_len):
++            s._workers_ptr.unsafe_offset(i)[].wait_started()
+         return s^
+ 
+     def _abandon_start(mut self):
+--- a/flare/tls/_server_ffi.mojo
++++ b/flare/tls/_server_ffi.mojo
+@@ -50,7 +50,6 @@
+ from std.memory import Pointer
+ 
+ from ..net import _find_flare_lib
+-from ..net.cstr import EMPTY_PASS, EMPTY_REJECT, c_str_addr
+ from ..utils.dylib import dl_sym
+ 
+ 
+@@ -63,11 +62,12 @@
+ # ``get_function`` and the call inside the borrow, so the dylib
+ # stays mapped across the entire FFI surface.
+ #
+-# Path arguments are taken as owned ``var`` and handed to C through
+-# ``c_str_addr`` (``flare/net/cstr.mojo``): it refuses an empty path or one
+-# holding a NUL, and NUL-terminates the rest in place (a path materialized
+-# from a StringSlice is not NUL-terminated under ``unsafe_ptr``). The owned
+-# arg outlives the call.
++# Path arguments are taken as owned ``var`` and NUL-terminated in place
++# with ``as_c_string_slice`` before the C call: a path materialized from
++# a StringSlice is not NUL-terminated under ``unsafe_ptr``, so OpenSSL's
++# file open would read past it (same defect as the SNI host fixed in
++# ``flare/tls/stream.mojo`` ``_do_ssl_connect``). The owned arg outlives
++# the call; the slice views its now-terminated buffer.
+ 
+ 
+ def _do_ssl_ctx_new_server(
+@@ -76,9 +76,9 @@
+     var f = dl_sym[def(Int, Int) thin abi("C") -> Int](
+         lib, "flare_ssl_ctx_new_server"
+     )
+-    var cert_c = c_str_addr(cert_path, EMPTY_REJECT, "TLS certificate path")
+-    var key_c = c_str_addr(key_path, EMPTY_REJECT, "TLS key path")
+-    var addr = f(cert_c, key_c)
++    var cert_c = cert_path.as_c_string_span()
++    var key_c = key_path.as_c_string_span()
++    var addr = f(Int(cert_c.ptr()), Int(key_c.ptr()))
+     # The C-string pointers escape as raw Int, so the compiler does not
+     # see that the owned path buffers must stay live across the call.
+     # as_c_string_slice may reallocate (a slice-derived, exact-length
+@@ -107,9 +107,9 @@
+     var f = dl_sym[def(Int, Int, Int) thin abi("C") -> c_int](
+         lib, "flare_ssl_ctx_reload"
+     )
+-    var cert_c = c_str_addr(cert_path, EMPTY_REJECT, "TLS certificate path")
+-    var key_c = c_str_addr(key_path, EMPTY_REJECT, "TLS key path")
+-    var rc = Int(f(addr, cert_c, key_c))
++    var cert_c = cert_path.as_c_string_span()
++    var key_c = key_path.as_c_string_span()
++    var rc = Int(f(addr, Int(cert_c.ptr()), Int(key_c.ptr())))
+     # Anchor the owned buffers past the call (see _do_ssl_ctx_new_server).
+     _ = cert_path^
+     _ = key_path^
+@@ -127,10 +127,12 @@
+     var f = dl_sym[def(Int, Int, Int, Int) thin abi("C") -> c_int](
+         lib, "flare_ssl_ctx_set_cert"
+     )
+-    var host_c = c_str_addr(host, EMPTY_PASS, "TLS certificate host")
+-    var cert_c = c_str_addr(cert_path, EMPTY_REJECT, "TLS certificate path")
+-    var key_c = c_str_addr(key_path, EMPTY_REJECT, "TLS key path")
+-    var rc = Int(f(addr, host_c, cert_c, key_c))
++    var host_c = host.as_c_string_span()
++    var cert_c = cert_path.as_c_string_span()
++    var key_c = key_path.as_c_string_span()
++    var rc = Int(
++        f(addr, Int(host_c.ptr()), Int(cert_c.ptr()), Int(key_c.ptr()))
++    )
+     _ = host^
+     _ = cert_path^
+     _ = key_path^
+@@ -154,8 +156,8 @@
+     var f = dl_sym[def(Int, Int) thin abi("C") -> c_int](
+         lib, "flare_ssl_ctx_set_verify_client_cert"
+     )
+-    var ca_c = c_str_addr(ca_path, EMPTY_REJECT, "client CA bundle path")
+-    var rc = Int(f(addr, ca_c))
++    var ca_c = ca_path.as_c_string_span()
++    var rc = Int(f(addr, Int(ca_c.ptr())))
+     # Anchor the owned buffer past the call (see _do_ssl_ctx_new_server).
+     _ = ca_path^
+     if rc != 0:
+--- a/flare/tls/ffi/build.sh
++++ b/flare/tls/ffi/build.sh
+@@ -98,7 +98,7 @@
+     "$SOURCE" \
+     -I"$CONDA_PREFIX/include" \
+     -L"$CONDA_PREFIX/lib" \
+-    -lssl -lcrypto -ldl \
++    -lssl -lcrypto \
+     $NODELETE \
+     -Wl,-rpath,"$CONDA_PREFIX/lib"; then
+     echo ""
+--- a/flare/tls/ffi/openssl_wrapper.cpp
++++ b/flare/tls/ffi/openssl_wrapper.cpp
+@@ -15,7 +15,6 @@
+ #include <openssl/x509_vfy.h>
+ #include <openssl/x509v3.h>
+ #include <openssl/pem.h>
+-#include <dlfcn.h>
+ #include <pthread.h>
+ #include <string.h>
+ #include <string>
+@@ -45,20 +44,6 @@
+  * TLS access (the allocator's included) on __tls_get_addr's slow path. */
+ static pthread_key_t last_error_key;
+ static pthread_once_t last_error_once = PTHREAD_ONCE_INIT;
+-
+-/* This library must never be unloaded: the error key's destructor and the
+- * callbacks it hands OpenSSL are code in this image, and both can run after
+- * the caller's handle is gone. Callers load it with dlopen and dlclose it
+- * when their handle drops. Linux builds link with -z nodelete; macOS has no
+- * such flag, and since the shim lost its TLS segment (which dyld refuses to
+- * unload) the last dlclose really unmaps it, and the next call into it
+- * crashes. A RTLD_NODELETE reference taken at load time is the portable
+- * spelling of -z nodelete. */
+-__attribute__((constructor)) static void pin_self() {
+-    Dl_info info;
+-    if (dladdr(reinterpret_cast<void*>(&pin_self), &info) && info.dli_fname)
+-        (void)dlopen(info.dli_fname, RTLD_NOW | RTLD_NOLOAD | RTLD_NODELETE);
+-}
+ 
+ static void last_error_key_init() {
+     pthread_key_create(&last_error_key, [](void* p) {
+--- a/flare/tls/stream.mojo
++++ b/flare/tls/stream.mojo
+@@ -58,7 +58,6 @@
+ from ..io import Readable
+ from .config import TlsConfig, TlsVerify
+ from ..net.error import Timeout
+-from ..net.cstr import EMPTY_NULL, EMPTY_REJECT, c_str_addr
+ from ._server_ffi import (
+     SSL_IO_EOF_UNCLEAN,
+     SSL_IO_WANT_READ,
+@@ -137,14 +136,17 @@
+     var f = dl_sym[def(Int, Int) thin abi("C") -> c_int](
+         lib, "flare_ssl_ctx_load_ca_bundle"
+     )
+-    # Empty means "system default": NULL, which the C wrapper routes to
+-    # SSL_CTX_set_default_verify_paths (issue #42). `c_str_addr`
+-    # NUL-terminates in place, so `ca_path` is owned; its address escapes as
+-    # a raw Int, so anchor the buffer past the synchronous call (otherwise
+-    # it is ASAP-destroyed before OpenSSL reads it: heap-use-after-free
+-    # under asan when a slice-derived path had to be reallocated).
+-    var ca_c = c_str_addr(ca_path, EMPTY_NULL, "TlsConfig.ca_bundle")
+-    var rc = Int(f(ctx, ca_c))
++    # NUL-terminate in place before the C call. A path materialized from
++    # a StringSlice is not NUL-terminated under unsafe_ptr, so OpenSSL's
++    # file open would read past it (same defect as the SNI host fixed in
++    # _do_ssl_connect). `ca_path` is owned and outlives the call; `ca_c`
++    # views its now-terminated buffer.
++    var ca_c = ca_path.as_c_string_span()
++    var rc = Int(f(ctx, Int(ca_c.ptr())))
++    # The C-string pointer escapes as raw Int; anchor the owned buffer
++    # past the synchronous call so it is not ASAP-destroyed before
++    # OpenSSL reads the path (heap-use-after-free under asan when
++    # as_c_string_slice had to reallocate a slice-derived path).
+     _ = ca_path^
+     return rc
+ 
+@@ -158,10 +160,11 @@
+     var f = dl_sym[def(Int, Int, Int) thin abi("C") -> c_int](
+         lib, "flare_ssl_ctx_load_cert_key"
+     )
+-    # See _do_ssl_ctx_load_ca_bundle. Both owned args outlive the call.
+-    var cert_c = c_str_addr(cert_path, EMPTY_REJECT, "TlsConfig.cert_file")
+-    var key_c = c_str_addr(key_path, EMPTY_REJECT, "TlsConfig.key_file")
+-    var rc = Int(f(ctx, cert_c, key_c))
++    # See _do_ssl_ctx_load_ca_bundle: NUL-terminate slice-derived paths
++    # in place. Both owned args outlive the single FFI call.
++    var cert_c = cert_path.as_c_string_span()
++    var key_c = key_path.as_c_string_span()
++    var rc = Int(f(ctx, Int(cert_c.ptr()), Int(key_c.ptr())))
+     # Anchor the owned buffers past the call (see _do_ssl_ctx_load_ca_bundle).
+     _ = cert_path^
+     _ = key_path^
+@@ -199,9 +202,9 @@
+     # common case — `Url.parse(...).host`) is not NUL-terminated under
+     # `unsafe_ptr`, so OpenSSL's SSL_set_tlsext_host_name would read past the
+     # hostname and send a corrupted SNI (some servers reply handshake_failure).
+-    # Never NULL: the C side skips hostname verification for an empty name.
+-    var cstr = c_str_addr(sni, EMPTY_REJECT, "TLS server name")
+-    var rc = Int(f(ssl, cstr))
++    # `as_c_string_slice` is mutating and `sni` is owned + lives across the call.
++    var cstr = sni.as_c_string_span()
++    var rc = Int(f(ssl, Int(cstr.ptr())))
+     # Anchor the owned SNI buffer past the call (see
+     # _do_ssl_ctx_load_ca_bundle); Url.parse(...).host is slice-derived.
+     _ = sni^
+@@ -220,9 +223,9 @@
+     var f = dl_sym[def(Int, Int) thin abi("C") -> c_int](
+         lib, "flare_ssl_connect_ex"
+     )
+-    # Same as _do_ssl_connect; see the note there.
+-    var cstr = c_str_addr(sni, EMPTY_REJECT, "TLS server name")
+-    var rc = Int(f(ssl, cstr))
++    # Same NUL-termination dance as _do_ssl_connect; see the note there.
++    var cstr = sni.as_c_string_span()
++    var rc = Int(f(ssl, Int(cstr.ptr())))
+     _ = sni^
+     return rc
+ 
+--- a/flare/uds/_libc.mojo
++++ b/flare/uds/_libc.mojo
+@@ -33,8 +33,6 @@
+ from std.ffi import c_char, c_int, c_uint, external_call, get_errno, ErrNo
+ from std.memory import Pointer
+ from std.sys.info import CompilationTarget
+-
+-from ..net.cstr import CSTR_PASS, EMPTY_REJECT, c_str_verdict
+ 
+ 
+ comptime AF_UNIX: c_int = 1
+@@ -148,8 +146,6 @@
+ 
+     ``as_c_string_span`` is mutating, so we ask for an owning
+     ``var`` to avoid silently mutating the caller's string."""
+-    if c_str_verdict(path.as_bytes(), EMPTY_REJECT) != CSTR_PASS:
+-        return -1
+     return external_call["unlink", c_int](path.as_c_string_span())
+ 
+ 
+--- a/flare/ws/server.mojo
++++ b/flare/ws/server.mojo
+@@ -1372,10 +1372,15 @@
+         var arg = ctx_ptr.unsafe_bitcast[UInt8]()
+         var addr_int = Int(arg)
+         ctx_addrs.append(addr_int)
+-        var th = ThreadHandle.spawn_os[_ws_worker_entry](
++        var th = ThreadHandle.spawn_serving[_ws_worker_entry](
+             Pointer[UInt8, MutUntrackedOrigin](unsafe_from_address=addr_int)
+         )
+         (threads_ptr.unsafe_offset(i)).unsafe_write(th^)
++    # See Scheduler.start: no serving loop may stay queued on the
++    # AsyncRT pool. No-op for OS threads.
++    for i in range(num_workers):
++        (threads_ptr.unsafe_offset(i))[].wait_started()
++
+     # Workers run forever; this join blocks until each worker
+     # exits (normally never, since the per-worker listener
+     # stays open). Closing the listener from another thread
+--- a/json/cpu/simdjson_ffi.mojo
++++ b/json/cpu/simdjson_ffi.mojo
+@@ -28,12 +28,13 @@
+ 
+ 
+ def _find_simdjson_library() -> String:
+-    """Find the simdjson wrapper library in standard locations."""
+-    # Check CONDA_PREFIX first (installed via conda/pixi)
++    """Find the simdjson wrapper bundled in Mojara or an active Conda environment."""
++    var mojara_home = getenv("MOJARA_HOME", "")
++    if mojara_home.byte_length() > 0:
++        return mojara_home + "/lib/libsimdjson_wrapper.so"
+     var conda_prefix = getenv("CONDA_PREFIX", "")
+-    if conda_prefix:
++    if conda_prefix.byte_length() > 0:
+         return conda_prefix + "/lib/libsimdjson_wrapper.so"
+-    # Fallback to local build directory (development)
+     return "build/libsimdjson_wrapper.so"
+ 
+ 
+--- a/morph/json/value.mojo
++++ b/morph/json/value.mojo
+@@ -181,9 +181,10 @@
+         var result = List[Value]()
+         if self._count == 0:
+             return result^
+-        var elems = _extract_array_elements(self._raw)
+-        for i in range(len(elems)):
+-            result.append(_parse_value(elems[i]))
++        for i in range(self._count):
++            var elem_str = _extract_array_element(self._raw, i)
++            var elem = _parse_value(elem_str)
++            result.append(elem^)
+         return result^
+ 
+ 
+@@ -670,20 +671,25 @@
+     return String(from_utf8_lossy=raw[byte=vs:i].as_bytes())
+ 
+ 
+-def _extract_array_elements(raw: String) raises -> List[String]:
+-    """Extract all top-level array elements from raw JSON in a single pass.
+-
+-    Walks the array once with a forward cursor, so full traversal is O(N)
+-    rather than rescanning from the start for every element.
+-    """
+-    var result = List[String]()
++def _extract_array_element(raw: String, index: Int) raises -> String:
++    """Extract an array element by index from raw JSON."""
+     var data = raw.as_bytes()
+     var n = len(data)
+     var i = 0
+-
+-    while i < n and data[i] != UInt8(ord("[")):
++    var current = 0
++    var depth = 0
++
++    while i < n and (
++        data[i] == UInt8(ord("["))
++        or data[i] == UInt8(ord(" "))
++        or data[i] == UInt8(ord("\t"))
++        or data[i] == UInt8(ord("\n"))
++        or data[i] == UInt8(ord("\r"))
++    ):
++        if data[i] == UInt8(ord("[")):
++            _ = depth
++            depth = 1
+         i += 1
+-    i += 1
+ 
+     while i < n:
+         while i < n and (
+@@ -695,9 +701,9 @@
+             i += 1
+         if i >= n or data[i] == UInt8(ord("]")):
+             break
+-        result.append(_extract_json_value(raw, i))
+-
+-        # Advance to the ',' or ']' that ends this element.
++        if current == index:
++            return _extract_json_value(raw, i)
++
+         var ed = 0
+         var in_str = False
+         var escaped = False
+@@ -726,14 +732,15 @@
+                 else:
+                     break
+             elif c == UInt8(ord(",")) and ed == 0:
++                i += 1
++                current += 1
+                 break
+             i += 1
+ 
+         if i >= n or data[i] == UInt8(ord("]")):
+             break
+-        i += 1
+-
+-    return result^
++
++    raise Error("Array index out of bounds: " + String(index))
+ 
+ 
+ def _count_array_elements(raw: String) -> Int:
+--- a/sqlite/__init__.mojo
++++ b/sqlite/__init__.mojo
+@@ -99,12 +99,4 @@
+ """
+ 
+ from .db import Database, Statement, Row, Transaction
+-from .ffi import (
+-    SQLITE_OPEN_READONLY,
+-    SQLITE_OPEN_READWRITE,
+-    SQLITE_OPEN_CREATE,
+-    SQLITE_OPEN_URI,
+-    SQLITE_OPEN_NOMUTEX,
+-    SQLITE_OPEN_FULLMUTEX,
+-)
+ from .orm import create_table, insert, query
+--- a/sqlite/db.mojo
++++ b/sqlite/db.mojo
+@@ -45,7 +45,6 @@
+     SQLITE_INTEGER,
+     SQLITE_FLOAT,
+     SQLITE_TEXT,
+-    SQLITE_BLOB,
+     SQLITE_NULL,
+ )
+ 
+@@ -103,19 +102,16 @@
+     var _handle: Int  # sqlite3 connection handle (non-owning borrow)
+     var _done: Bool  # True after commit() or rollback(); silences __deinit__
+ 
+-    def __init__(
+-        out self, handle: Int, ffi: Sqlite3FFI
+-    ) raises:
++    def __init__(out self, handle: Int) raises:
+         """Begin a new transaction on ``handle``.
+ 
+         Args:
+             handle: Open ``sqlite3*`` connection handle.
+-            ffi: Loaded SQLite entry points (``Database`` passes its own).
+ 
+         Raises:
+             Error: If ``BEGIN`` fails (e.g. a transaction is already active).
+         """
+-        self._ffi = ffi.copy()
++        self._ffi = Sqlite3FFI()
+         self._handle = handle
+         self._done = False
+         self._ffi.exec(handle, "BEGIN")
+@@ -227,16 +223,14 @@
+     var _ints: List[Int]
+     var _floats: List[Float64]
+     var _texts: List[String]
+-    var _blobs: List[List[UInt8]]
+ 
+     def __init__(
+         out self,
+         ncols: Int,
+-        var types: List[Int],
+-        var ints: List[Int],
+-        var floats: List[Float64],
+-        var texts: List[String],
+-        var blobs: List[List[UInt8]],
++        types: List[Int],
++        ints: List[Int],
++        floats: List[Float64],
++        texts: List[String],
+     ):
+         """Construct a ``Row`` from pre-read column snapshots.
+ 
+@@ -246,14 +240,12 @@
+             ints:   Per-column integer values (0 for non-integer columns).
+             floats: Per-column float values (0.0 for non-float columns).
+             texts:  Per-column text values (empty for non-text columns).
+-            blobs:  Per-column BLOB values (empty for non-BLOB columns).
+         """
+         self._ncols = ncols
+-        self._types = types^
+-        self._ints = ints^
+-        self._floats = floats^
+-        self._texts = texts^
+-        self._blobs = blobs^
++        self._types = types.copy()
++        self._ints = ints.copy()
++        self._floats = floats.copy()
++        self._texts = texts.copy()
+ 
+     def num_cols(self) -> Int:
+         """Return the number of columns in this row.
+@@ -295,17 +287,6 @@
+             String value (empty string if the column is not ``SQLITE_TEXT``).
+         """
+         return self._texts[col]
+-
+-    def blob_val(self, col: Int) -> List[UInt8]:
+-        """Return the BLOB value of column ``col``.
+-
+-        Args:
+-            col: 0-based column index.
+-
+-        Returns:
+-            A copy of the bytes (empty if the column is not ``SQLITE_BLOB``).
+-        """
+-        return self._blobs[col].copy()
+ 
+     def is_null(self, col: Int) -> Bool:
+         """Check whether column ``col`` contains SQL NULL.
+@@ -335,20 +316,17 @@
+     var _db: Int
+     var _handle: Int
+ 
+-    def __init__(
+-        out self, db: Int, sql: String, ffi: Sqlite3FFI
+-    ) raises:
++    def __init__(out self, db: Int, sql: String) raises:
+         """Compile a SQL statement.
+ 
+         Args:
+             db:  sqlite3 handle of the owning connection.
+             sql: A single SQL statement (no trailing semicolon needed).
+-            ffi: Loaded SQLite entry points (``Database`` passes its own).
+ 
+         Raises:
+             Error: If the SQL fails to compile.
+         """
+-        self._ffi = ffi.copy()
++        self._ffi = Sqlite3FFI()
+         self._db = db
+         self._handle = self._ffi.prepare_v2(db, sql)
+ 
+@@ -356,19 +334,6 @@
+         """Finalize the statement and release its resources."""
+         self._ffi.finalize(self._handle)
+ 
+-    def clear_bindings(self) raises:
+-        """Set every bound parameter back to NULL.
+-
+-        ``reset()`` keeps bindings, so call this when a reused statement
+-        must not see the previous values.
+-
+-        Raises:
+-            Error: If the call fails.
+-        """
+-        var rc = self._ffi.clear_bindings(self._handle)
+-        if rc != 0:
+-            raise Error("sqlite3_clear_bindings failed (rc=" + String(Int(rc)) + ")")
+-
+     def reset(self) raises:
+         """Reset the statement so it can be re-executed.
+ 
+@@ -417,18 +382,6 @@
+         """
+         self._ffi.bind_text(self._handle, idx, val)
+ 
+-    def bind_blob(self, idx: Int, val: List[UInt8]) raises:
+-        """Bind a BLOB value to parameter ``idx``.
+-
+-        Args:
+-            idx: 1-based parameter index.
+-            val: Byte buffer (copied by SQLite).
+-
+-        Raises:
+-            Error: On binding failure.
+-        """
+-        self._ffi.bind_blob(self._handle, idx, val)
+-
+     def bind_null(self, idx: Int):
+         """Bind SQL NULL to parameter ``idx``.
+ 
+@@ -439,94 +392,26 @@
+ 
+     # -- execution -----------------------------------------------------------
+ 
+-    def step_row(self) raises -> Bool:
+-        """Advance the statement by one step without copying the row.
+-
+-        Read the current row with ``column_int``, ``column_text`` and the
+-        other ``column_*`` accessors until the next ``step_row()``,
+-        ``step()`` or ``reset()``.
+-
+-        Returns:
+-            ``True`` when a result row is available, ``False`` when the
+-            statement has finished (``SQLITE_DONE``).
++    def step(self) raises -> Optional[Row]:
++        """Advance the statement by one step.
++
++        Reads all column values into a ``Row`` snapshot when a row is
++        available, so the caller does not need to keep the statement alive.
++
++        Returns:
++            ``Some(Row)`` when a result row is available,
++            ``None`` when the statement has finished (``SQLITE_DONE``).
+ 
+         Raises:
+             Error: If ``sqlite3_step`` returns an error code.
+         """
+         var rc = self._ffi.step(self._handle)
+         if rc == SQLITE_ROW:
+-            return True
+-        if Int(rc) == 101:  # SQLITE_DONE
+-            return False
+-        raise Error(
+-            "sqlite3_step failed (rc="
+-            + String(Int(rc))
+-            + "): "
+-            + self._ffi.errmsg(self._db)
+-        )
+-
+-    def column_count(self) -> Int:
+-        """Number of columns in the current row."""
+-        return self._ffi.column_count(self._handle)
+-
+-    def column_type(self, col: Int) -> Int:
+-        """SQLite type code of column ``col`` (0-based) in the current row."""
+-        return self._ffi.column_type(self._handle, col)
+-
+-    def column_is_null(self, col: Int) -> Bool:
+-        """Whether column ``col`` of the current row is NULL."""
+-        return self._ffi.column_type(self._handle, col) == SQLITE_NULL
+-
+-    def column_int(self, col: Int) -> Int:
+-        """Integer value of column ``col`` of the current row."""
+-        return self._ffi.column_int(self._handle, col)
+-
+-    def column_float(self, col: Int) -> Float64:
+-        """Float value of column ``col`` of the current row."""
+-        return self._ffi.column_double(self._handle, col)
+-
+-    def column_text(self, col: Int) -> String:
+-        """Text value of column ``col`` of the current row."""
+-        return self._ffi.column_text(self._handle, col)
+-
+-    def append_column_text(self, col: Int, mut out: List[UInt8]):
+-        """Append the raw UTF-8 bytes of text column ``col`` to ``out``.
+-
+-        Zero-intermediate-copy alternative to ``column_text`` for callers that
+-        build a byte buffer (for example a JSON response): one bulk copy
+-        straight from SQLite's row buffer. Appends nothing for SQL NULL.
+-        """
+-        var addr = self._ffi.column_text_addr(self._handle, col)
+-        var n = self._ffi.column_text_len(self._handle, col)
+-        if addr == 0 or n == 0:
+-            return
+-        var p = Pointer[UInt8, MutUntrackedOrigin](unsafe_from_address=addr)
+-        out.extend(Span[UInt8, MutUntrackedOrigin](unsafe_ptr=p, length=n))
+-
+-    def column_blob(self, col: Int) -> List[UInt8]:
+-        """BLOB value of column ``col`` of the current row."""
+-        return self._ffi.column_blob(self._handle, col)
+-
+-    def step(self) raises -> Optional[Row]:
+-        """Advance the statement by one step.
+-
+-        Reads all column values into a ``Row`` snapshot when a row is
+-        available, so the caller does not need to keep the statement alive.
+-
+-        Returns:
+-            ``Some(Row)`` when a result row is available,
+-            ``None`` when the statement has finished (``SQLITE_DONE``).
+-
+-        Raises:
+-            Error: If ``sqlite3_step`` returns an error code.
+-        """
+-        if self.step_row():
+             var ncols = self._ffi.column_count(self._handle)
+             var types = List[Int]()
+             var ints = List[Int]()
+             var floats = List[Float64]()
+             var texts = List[String]()
+-            var blobs = List[List[UInt8]]()
+             for col in range(ncols):
+                 var t = self._ffi.column_type(self._handle, col)
+                 types.append(t)
+@@ -546,12 +431,15 @@
+                     ints.append(0)
+                     floats.append(Float64(0))
+                     texts.append(String(""))
+-                if t == SQLITE_BLOB:
+-                    blobs.append(self._ffi.column_blob(self._handle, col))
+-                else:
+-                    blobs.append(List[UInt8]())
+-            return Row(ncols, types^, ints^, floats^, texts^, blobs^)
+-        return None
++            return Row(ncols, types, ints, floats, texts)
++        if Int(rc) == 101:  # SQLITE_DONE
++            return None
++        raise Error(
++            "sqlite3_step failed (rc="
++            + String(Int(rc))
++            + "): "
++            + self._ffi.errmsg(self._db)
++        )
+ 
+ 
+ # -----------------------------------------------------------------------
+@@ -591,28 +479,6 @@
+         """Close the database connection."""
+         _ = self._ffi.close(self._handle)
+ 
+-    def __init__(
+-        out self, path: String, *, flags: Int, busy_timeout_ms: Int = 0
+-    ) raises:
+-        """Open a database with explicit ``SQLITE_OPEN_*`` flags.
+-
+-        Use ``SQLITE_OPEN_READONLY`` for read-only handles, and
+-        ``SQLITE_OPEN_NOMUTEX`` only when each connection is used by a
+-        single thread.
+-
+-        Args:
+-            path: File-system path to the database, or ``:memory:``.
+-            flags: ``SQLITE_OPEN_*`` flags, for example
+-                ``SQLITE_OPEN_READWRITE | SQLITE_OPEN_NOMUTEX``.
+-            busy_timeout_ms: How long a locked database is retried before
+-                ``SQLITE_BUSY`` is returned; 0 fails immediately.
+-
+-        Raises:
+-            Error: If ``sqlite3_open_v2`` fails.
+-        """
+-        self._ffi = Sqlite3FFI()
+-        self._handle = self._ffi.open(path, flags, busy_timeout_ms)
+-
+     def execute(self, sql: String) raises:
+         """Execute one or more SQL statements with no result rows.
+ 
+@@ -639,7 +505,7 @@
+         Raises:
+             Error: If the SQL fails to compile.
+         """
+-        return Statement(self._handle, sql, self._ffi)
++        return Statement(self._handle, sql)
+ 
+     def transaction(self) raises -> Transaction:
+         """Begin a new transaction and return an RAII guard.
+@@ -662,7 +528,7 @@
+             db.execute("INSERT INTO line_items VALUES (1, 42, 3)")
+             tx.commit()   # both rows committed atomically
+         """
+-        return Transaction(self._handle, self._ffi)
++        return Transaction(self._handle)
+ 
+     def last_error(self) -> String:
+         """Return the most recent error message for this connection.
+--- a/sqlite/ffi.mojo
++++ b/sqlite/ffi.mojo
+@@ -26,17 +26,6 @@
+ comptime SQLITE_OK = 0
+ comptime SQLITE_ROW = 100
+ comptime SQLITE_DONE = 101
+-
+-# -----------------------------------------------------------------------
+-# sqlite3_open_v2 flags
+-# -----------------------------------------------------------------------
+-
+-comptime SQLITE_OPEN_READONLY = 0x00000001
+-comptime SQLITE_OPEN_READWRITE = 0x00000002
+-comptime SQLITE_OPEN_CREATE = 0x00000004
+-comptime SQLITE_OPEN_URI = 0x00000040
+-comptime SQLITE_OPEN_NOMUTEX = 0x00008000
+-comptime SQLITE_OPEN_FULLMUTEX = 0x00010000
+ 
+ # -----------------------------------------------------------------------
+ # Column type codes
+@@ -131,7 +120,7 @@
+ # -----------------------------------------------------------------------
+ 
+ 
+-struct Sqlite3FFI(Copyable):
++struct Sqlite3FFI(Movable):
+     """Runtime-loaded SQLite FFI: ``dlopen`` + ``dlsym`` for all C entry-points.
+ 
+     Loads ``libsqlite3`` at construction via ``OwnedDLHandle`` and resolves
+@@ -140,12 +129,12 @@
+     all supported platforms), matching the C ABI on x86-64 and arm64 without
+     requiring ``Pointer`` type annotations.
+ 
+-    The function pointers are plain addresses, so an instance is cheap to
+-    copy.  ``Database`` loads the library once and hands a copy to every
+-    ``Statement`` and ``Transaction`` it creates, so ``prepare()`` and
+-    ``transaction()`` do no ``dlopen``/``dlsym`` work.  ``RTLD.NODELETE``
+-    keeps the library resident for the process lifetime, so the handle
+-    used to resolve the symbols does not need to outlive ``__init__``.
++    Each ``Database``, ``Statement``, and ``Transaction`` owns one instance.
++    The OS reference-counts the underlying shared library, so multiple
++    concurrent ``OwnedDLHandle`` objects map to a single loaded image.
++    ``RTLD.NODELETE`` ensures ``dlclose`` is a no-op: the library stays
++    resident for the process lifetime even as ``Sqlite3FFI`` instances
++    are created and destroyed per-request.
+ 
+     Example::
+ 
+@@ -155,9 +144,10 @@
+         _ = ffi.close(db)
+     """
+ 
++    var _lib: OwnedDLHandle
++
+     # -- connection functions ------------------------------------------------
+-    var _fn_open: def(Int, Int, Int32, Int) thin abi("C") -> Int32
+-    var _fn_busy_timeout: def(Int, Int32) thin abi("C") -> Int32
++    var _fn_open: def(Int, Int) thin abi("C") -> Int32
+     var _fn_close: def(Int) thin abi("C") -> Int32
+     var _fn_errmsg: def(Int) thin abi("C") -> Int
+     var _fn_exec: def(Int, Int, Int, Int, Int) thin abi("C") -> Int32
+@@ -166,7 +156,6 @@
+     var _fn_prepare: def(Int, Int, Int32, Int, Int) thin abi("C") -> Int32
+     var _fn_step: def(Int) thin abi("C") -> Int32
+     var _fn_reset: def(Int) thin abi("C") -> Int32
+-    var _fn_clear_bindings: def(Int) thin abi("C") -> Int32
+     var _fn_finalize: def(Int) thin abi("C") -> Int32
+ 
+     # -- parameter binding (1-based index) -----------------------------------
+@@ -174,7 +163,6 @@
+     var _fn_bind_double: def(Int, Int32, Float64) thin abi("C") -> Int32
+     var _fn_bind_text: def(Int, Int32, Int, Int32, Int) thin abi("C") -> Int32
+     var _fn_bind_null: def(Int, Int32) thin abi("C") -> Int32
+-    var _fn_bind_blob: def(Int, Int32, Int, Int32, Int) thin abi("C") -> Int32
+ 
+     # -- column reading (0-based index) --------------------------------------
+     var _fn_col_count: def(Int) thin abi("C") -> Int32
+@@ -182,8 +170,6 @@
+     var _fn_col_int64: def(Int, Int32) thin abi("C") -> Int
+     var _fn_col_double: def(Int, Int32) thin abi("C") -> Float64
+     var _fn_col_text: def(Int, Int32) thin abi("C") -> Int
+-    var _fn_col_blob: def(Int, Int32) thin abi("C") -> Int
+-    var _fn_col_bytes: def(Int, Int32) thin abi("C") -> Int32
+ 
+     def __init__(out self, lib_path: String = "") raises:
+         """Load ``libsqlite3`` and resolve all function pointers.
+@@ -203,84 +189,64 @@
+         # WAL locks, and shared-memory mappings.  This causes "no such
+         # table" and SQLITE_CANTOPEN errors on subsequent open() calls.
+         # The library stays resident until process exit regardless.
+-        var lib = OwnedDLHandle(path, RTLD.NOW | RTLD.GLOBAL | RTLD.NODELETE)
+-
+-        self._fn_open = _dl_sym[
+-            def(Int, Int, Int32, Int) thin abi("C") -> Int32
+-        ](lib, "sqlite3_open_v2")
+-        self._fn_busy_timeout = _dl_sym[def(Int, Int32) thin abi("C") -> Int32](
+-            lib, "sqlite3_busy_timeout"
+-        )
+-        self._fn_clear_bindings = _dl_sym[def(Int) thin abi("C") -> Int32](
+-            lib, "sqlite3_clear_bindings"
++        self._lib = OwnedDLHandle(path, RTLD.NOW | RTLD.GLOBAL | RTLD.NODELETE)
++
++        self._fn_open = _dl_sym[def(Int, Int) thin abi("C") -> Int32](
++            self._lib, "sqlite3_open"
+         )
+         self._fn_close = _dl_sym[def(Int) thin abi("C") -> Int32](
+-            lib, "sqlite3_close"
++            self._lib, "sqlite3_close"
+         )
+         self._fn_errmsg = _dl_sym[def(Int) thin abi("C") -> Int](
+-            lib, "sqlite3_errmsg"
++            self._lib, "sqlite3_errmsg"
+         )
+         self._fn_exec = _dl_sym[
+             def(Int, Int, Int, Int, Int) thin abi("C") -> Int32
+-        ](lib, "sqlite3_exec")
++        ](self._lib, "sqlite3_exec")
+         self._fn_prepare = _dl_sym[
+             def(Int, Int, Int32, Int, Int) thin abi("C") -> Int32
+-        ](lib, "sqlite3_prepare_v2")
++        ](self._lib, "sqlite3_prepare_v2")
+         self._fn_step = _dl_sym[def(Int) thin abi("C") -> Int32](
+-            lib, "sqlite3_step"
++            self._lib, "sqlite3_step"
+         )
+         self._fn_reset = _dl_sym[def(Int) thin abi("C") -> Int32](
+-            lib, "sqlite3_reset"
++            self._lib, "sqlite3_reset"
+         )
+         self._fn_finalize = _dl_sym[def(Int) thin abi("C") -> Int32](
+-            lib, "sqlite3_finalize"
++            self._lib, "sqlite3_finalize"
+         )
+         self._fn_bind_int = _dl_sym[
+             def(Int, Int32, Int) thin abi("C") -> Int32
+-        ](lib, "sqlite3_bind_int64")
++        ](self._lib, "sqlite3_bind_int64")
+         self._fn_bind_double = _dl_sym[
+             def(Int, Int32, Float64) thin abi("C") -> Int32
+-        ](lib, "sqlite3_bind_double")
++        ](self._lib, "sqlite3_bind_double")
+         self._fn_bind_text = _dl_sym[
+             def(Int, Int32, Int, Int32, Int) thin abi("C") -> Int32
+-        ](lib, "sqlite3_bind_text")
++        ](self._lib, "sqlite3_bind_text")
+         self._fn_bind_null = _dl_sym[def(Int, Int32) thin abi("C") -> Int32](
+-            lib, "sqlite3_bind_null"
+-        )
+-        self._fn_bind_blob = _dl_sym[
+-            def(Int, Int32, Int, Int32, Int) thin abi("C") -> Int32
+-        ](lib, "sqlite3_bind_blob")
++            self._lib, "sqlite3_bind_null"
++        )
+         self._fn_col_count = _dl_sym[def(Int) thin abi("C") -> Int32](
+-            lib, "sqlite3_column_count"
++            self._lib, "sqlite3_column_count"
+         )
+         self._fn_col_type = _dl_sym[def(Int, Int32) thin abi("C") -> Int32](
+-            lib, "sqlite3_column_type"
++            self._lib, "sqlite3_column_type"
+         )
+         self._fn_col_int64 = _dl_sym[def(Int, Int32) thin abi("C") -> Int](
+-            lib, "sqlite3_column_int64"
++            self._lib, "sqlite3_column_int64"
+         )
+         self._fn_col_double = _dl_sym[def(Int, Int32) thin abi("C") -> Float64](
+-            lib, "sqlite3_column_double"
++            self._lib, "sqlite3_column_double"
+         )
+         self._fn_col_text = _dl_sym[def(Int, Int32) thin abi("C") -> Int](
+-            lib, "sqlite3_column_text"
+-        )
+-        self._fn_col_blob = _dl_sym[def(Int, Int32) thin abi("C") -> Int](
+-            lib, "sqlite3_column_blob"
+-        )
+-        self._fn_col_bytes = _dl_sym[def(Int, Int32) thin abi("C") -> Int32](
+-            lib, "sqlite3_column_bytes"
++            self._lib, "sqlite3_column_text"
+         )
+ 
+     # -- connection ----------------------------------------------------------
+ 
+-    def open(
+-        self,
+-        filename: String,
+-        flags: Int = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE,
+-        busy_timeout_ms: Int = 0,
+-    ) raises -> Int:
+-        """Open a SQLite database file with ``sqlite3_open_v2``.
++    def open(self, filename: String) raises -> Int:
++        """Open or create a SQLite database file.
+ 
+         Uses a ``List[Int]`` as the output buffer for the ``sqlite3**``
+         argument (same pattern as simdjson FFI for output pointer args).
+@@ -292,16 +258,12 @@
+ 
+         Args:
+             filename: File path or ``:memory:`` for an in-memory database.
+-            flags: ``SQLITE_OPEN_*`` flags; the default opens read-write and
+-                creates the file, like plain ``sqlite3_open``.
+-            busy_timeout_ms: How long a locked database is retried before
+-                ``SQLITE_BUSY``; 0 fails immediately.
+ 
+         Returns:
+             sqlite3 connection handle as ``Int``.
+ 
+         Raises:
+-            Error: If ``sqlite3_open_v2`` returns a non-zero code.
++            Error: If ``sqlite3_open`` returns a non-zero code.
+         """
+         var n = filename.byte_length()
+         var src = filename.unsafe_ptr()
+@@ -314,25 +276,16 @@
+         var rc = self._fn_open(
+             Int(buf.unsafe_ptr()),
+             Int(db_out.unsafe_ptr()),
+-            Int32(flags),
+-            0,
+         )
+         _ = buf^  # keep buf alive past the FFI call
+         if Int(rc) != SQLITE_OK:
+-            # A handle is returned even on failure; it holds the message
+-            # and must be closed.
+-            var msg = self.errmsg(db_out[0])
+-            _ = self._fn_close(db_out[0])
+             raise Error(
+-                "sqlite3_open_v2('"
++                "sqlite3_open('"
+                 + filename
+                 + "') failed (sqlite3 rc="
+                 + String(Int(rc))
+-                + "): "
+-                + msg
++                + ")"
+             )
+-        if busy_timeout_ms > 0:
+-            _ = self._fn_busy_timeout(db_out[0], Int32(busy_timeout_ms))
+         return db_out[0]
+ 
+     def close(self, db: Int) abi("C") -> Int32:
+@@ -470,17 +423,6 @@
+         """
+         return self._fn_reset(stmt)
+ 
+-    def clear_bindings(self, stmt: Int) abi("C") -> Int32:
+-        """Reset every bound parameter of a statement to NULL.
+-
+-        Args:
+-            stmt: sqlite3_stmt handle.
+-
+-        Returns:
+-            SQLite result code.
+-        """
+-        return self._fn_clear_bindings(stmt)
+-
+     def finalize(self, stmt: Int):
+         """Destroy a prepared statement and free its resources.
+ 
+@@ -545,26 +487,6 @@
+         _ = v^  # keep v alive past the FFI call
+         _check(rc, "sqlite3_bind_text (idx=" + String(idx) + ") failed")
+ 
+-    def bind_blob(self, stmt: Int, idx: Int, val: List[UInt8]) raises:
+-        """Bind a BLOB value to a statement parameter (SQLITE_TRANSIENT copy).
+-
+-        Args:
+-            stmt: sqlite3_stmt handle.
+-            idx:  Parameter index (1-based).
+-            val:  Byte buffer (copied by SQLite).
+-
+-        Raises:
+-            Error: On binding failure.
+-        """
+-        var v = val.copy()
+-        var v_len = Int32(len(v))
+-        # SQLITE_TRANSIENT = -1: SQLite copies the bytes immediately.
+-        var rc = self._fn_bind_blob(
+-            stmt, Int32(idx), Int(v.unsafe_ptr()), v_len, Int(-1)
+-        )
+-        _ = v^  # keep v alive past the FFI call
+-        _check(rc, "sqlite3_bind_blob (idx=" + String(idx) + ") failed")
+-
+     def bind_null(self, stmt: Int, idx: Int):
+         """Bind SQL NULL to a statement parameter.
+ 
+@@ -636,38 +558,3 @@
+             string for SQL NULL.
+         """
+         return _ptr_to_string(self._fn_col_text(stmt, Int32(col)))
+-
+-    def column_text_addr(self, stmt: Int, col: Int) abi("C") -> Int:
+-        """Address of the UTF-8 text of column ``col`` (0 for SQL NULL).
+-
+-        Valid until the next ``step``/``reset``/``finalize`` on ``stmt``.
+-        Call ``column_text_len`` *after* this (SQLite's documented order).
+-        """
+-        return self._fn_col_text(stmt, Int32(col))
+-
+-    def column_text_len(self, stmt: Int, col: Int) abi("C") -> Int:
+-        """Byte length of the text of column ``col`` (call after ``column_text_addr``).
+-        """
+-        return Int(self._fn_col_bytes(stmt, Int32(col)))
+-
+-    def column_blob(self, stmt: Int, col: Int) -> List[UInt8]:
+-        """Read a BLOB column value (0-based index).
+-
+-        Args:
+-            stmt: sqlite3_stmt handle.
+-            col:  Column index (0-based).
+-
+-        Returns:
+-            An owned copy of the column bytes, or an empty list for a
+-            zero-length BLOB or SQL NULL.
+-        """
+-        # sqlite3_column_blob must be called before sqlite3_column_bytes.
+-        var addr = self._fn_col_blob(stmt, Int32(col))
+-        var n = Int(self._fn_col_bytes(stmt, Int32(col)))
+-        var out = List[UInt8](capacity=n)
+-        if addr == 0 or n == 0:
+-            return out^
+-        var p = Pointer[UInt8, MutUntrackedOrigin](unsafe_from_address=addr)
+-        for i in range(n):
+-            out.append(p[unsafe_offset=i])
+-        return out^
+--- a/sqlite/orm.mojo
++++ b/sqlite/orm.mojo
+@@ -22,8 +22,6 @@
+ | Float64 / Float32| REAL           |
+ +------------------+----------------+
+ | Bool             | INTEGER (0/1)  |
+-+------------------+----------------+
+-| List[UInt8]      | BLOB           |
+ +------------------+----------------+
+ 
+ Fields whose types are not in the table above are silently skipped.
+@@ -62,10 +60,6 @@
+     OPT_BOOL_NAME,
+ )
+ from .db import Database, Row
+-
+-
+-comptime LIST_UINT8_NAME = reflect[List[UInt8]].name()
+-comptime OPT_LIST_UINT8_NAME = reflect[Optional[List[UInt8]]].name()
+ 
+ 
+ # ---------------------------------------------------------------------------
+@@ -211,14 +205,6 @@
+                     stmt.bind_int(param_idx, 1 if opt.value() else 0)
+                 else:
+                     stmt.bind_null(param_idx)
+-            elif type_name == LIST_UINT8_NAME:
+-                stmt.bind_blob(param_idx, ptr.unsafe_bitcast[List[UInt8]]()[])
+-            elif type_name == OPT_LIST_UINT8_NAME:
+-                ref opt = ptr.unsafe_bitcast[Optional[List[UInt8]]]()[]
+-                if opt:
+-                    stmt.bind_blob(param_idx, opt.value())
+-                else:
+-                    stmt.bind_null(param_idx)
+ 
+             param_idx += 1
+ 
+@@ -296,11 +282,6 @@
+                     elif type_name == OPT_BOOL_NAME:
+                         ptr.unsafe_deinit_pointee()
+                         ptr.unsafe_bitcast[Optional[Bool]]().unsafe_write(None)
+-                    elif type_name == OPT_LIST_UINT8_NAME:
+-                        ptr.unsafe_deinit_pointee()
+-                        ptr.unsafe_bitcast[Optional[List[UInt8]]]().unsafe_write(
+-                            None
+-                        )
+                 else:
+                     comptime
+                     if type_name == STRING_NAME:
+@@ -352,16 +333,6 @@
+                         ptr.unsafe_deinit_pointee()
+                         ptr.unsafe_bitcast[Optional[Bool]]().unsafe_write(
+                             row.int_val(col_idx) != 0
+-                        )
+-                    elif type_name == LIST_UINT8_NAME:
+-                        ptr.unsafe_deinit_pointee()
+-                        ptr.unsafe_bitcast[List[UInt8]]().unsafe_write(
+-                            row.blob_val(col_idx)
+-                        )
+-                    elif type_name == OPT_LIST_UINT8_NAME:
+-                        ptr.unsafe_deinit_pointee()
+-                        ptr.unsafe_bitcast[Optional[List[UInt8]]]().unsafe_write(
+-                            row.blob_val(col_idx)
+                         )
+ 
+                 col_idx += 1
+@@ -384,8 +355,7 @@
+         T: The Mojo field type to classify.
+ 
+     Returns:
+-        ``"TEXT"``, ``"INTEGER"``, ``"REAL"``, ``"BLOB"``, or ``""``
+-        (unsupported/skip).
++        ``"TEXT"``, ``"INTEGER"``, ``"REAL"``, or ``""`` (unsupported/skip).
+     """
+     comptime type_name = reflect[T].name()
+ 
+@@ -406,7 +376,5 @@
+         or type_name == OPT_FLOAT64_NAME
+     ):
+         return "REAL"
+-    elif type_name == LIST_UINT8_NAME or type_name == OPT_LIST_UINT8_NAME:
+-        return "BLOB"
+     else:
+         return ""
