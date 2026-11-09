@@ -53,7 +53,7 @@ jobs:
         run: pixi run bash scripts/ci/build-source-sdk.sh
       - name: Build release Conda package
         run: pixi run bash scripts/ci/build-release-package.sh
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: mojara-release-${{ matrix.target }}
           path: build/full-integration/release-packages/**/*.conda

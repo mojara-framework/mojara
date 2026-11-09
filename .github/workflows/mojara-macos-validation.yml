@@ -62,7 +62,7 @@ jobs:
           done
           tail -100 ../build/macos-app.log
           exit 1
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: macos-native-integration-diagnostics

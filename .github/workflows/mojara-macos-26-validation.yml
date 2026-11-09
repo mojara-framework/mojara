@@ -86,14 +86,14 @@ jobs:
       - name: Build unpublished Apple Silicon Conda package
         run: pixi run bash scripts/ci/build-macos-package.sh
       - name: Upload native macOS package for independent installation
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: mojara-osx-arm64-candidate
           path: build/full-integration/macos-packages/**/*.conda
           if-no-files-found: error
           retention-days: 7
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: macos-native-integration-diagnostics
@@ -118,7 +118,7 @@ jobs:
           path: build/macos-package-download
       - name: Install Mojara native package and run HTTP app from fresh environment
         run: bash scripts/ci/install-macos-package.sh
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: macos-fresh-install-diagnostics
