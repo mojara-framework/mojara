@@ -1,0 +1,40 @@
+context:
+  version: "1.2.5"
+
+package:
+  name: mojara-ci-smoke
+  version: ${{ version }}
+
+source:
+  path: ../../build/full-integration/package-payload
+  use_gitignore: false
+
+build:
+  number: 0
+  string: source_native_0
+  script: bash ${{ RECIPE_DIR }}/build.sh
+
+requirements:
+  run:
+    - mojo ==1.2.0
+    - watchexec >=2.7,<3
+    - libpq
+    - mariadb-connector-c
+    - openssl >=3
+    - sqlite
+    - zlib
+    - libdeflate
+    - brotli
+    - libsodium
+    - simdjson >=4,<5
+
+tests:
+  - script:
+      - mojara version
+      - mojara doctor
+
+about:
+  homepage: https://mojara.kasua.ng
+  summary: Native Mojara integration candidate for isolated CI smoke verification (not a production release)
+  license: MIT
+  license_file: mojara/LICENSE
