@@ -1,4 +1,8 @@
 #define _GNU_SOURCE
+#if defined(__APPLE__)
+/* Expose Darwin extensions such as arc4random_buf with POSIX feature macros. */
+#define _DARWIN_C_SOURCE 1
+#endif
 #define _POSIX_C_SOURCE 200809L
 #include <sys/types.h>
 #include <sys/stat.h>
