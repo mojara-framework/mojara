@@ -71,7 +71,7 @@ jobs:
         run: pixi run bash scripts/ci/package-and-install.sh
       - name: Upload unpublished CI packages for inspection
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: unpublished-native-package-${{ matrix.target }}
           path: |
@@ -138,7 +138,7 @@ jobs:
         run: bash scripts/ci/fresh-runner-install.sh
       - name: Upload fresh-runner diagnostics
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: fresh-runner-logs-${{ matrix.target }}
           path: |
