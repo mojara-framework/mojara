@@ -1,0 +1,77 @@
+name: Validate hosted Mojara Conda channel publication
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - scripts/release/publish-conda-channel.sh
+      - docs/CHANNEL-PUBLISH.md
+      - .github/workflows/channel-index.yml
+  pull_request:
+    paths:
+      - scripts/release/publish-conda-channel.sh
+      - docs/CHANNEL-PUBLISH.md
+      - .github/workflows/channel-index.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  channel-index:
+    name: Preserve legacy package and index Linux ARM64 and x86-64
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install isolated Conda indexer
+        run: |
+          python3 -m venv "$RUNNER_TEMP/conda-index-venv"
+          "$RUNNER_TEMP/conda-index-venv/bin/pip" install --disable-pip-version-check 'conda-index>=0.13,<0.14'
+
+      - name: Seed channel with previous official x86-64 release
+        run: |
+          set -Eeuo pipefail
+          mkdir -p build/channel/linux-64 build/channel/noarch
+          curl -fSL --retry 3 --connect-timeout 15 \
+            https://mojara.kasua.ng/conda/linux-64/mojara-1.2.5-hb0f4dca_0.conda \
+            -o build/channel/linux-64/mojara-1.2.5-hb0f4dca_0.conda
+          echo '838bb8d3404a8f481e2ec18236a539599dd66d151ae6a758675e6b4f1b893e02  build/channel/linux-64/mojara-1.2.5-hb0f4dca_0.conda' \
+            | sha256sum -c -
+          "$RUNNER_TEMP/conda-index-venv/bin/python" -m conda_index \
+            "$GITHUB_WORKSPACE/build/channel" --no-channeldata --no-rss
+
+      - name: Promote signed GitHub release assets into representative channel
+        run: |
+          CONDA_INDEX_PYTHON="$RUNNER_TEMP/conda-index-venv/bin/python" \
+            bash scripts/release/publish-conda-channel.sh \
+            "$GITHUB_WORKSPACE/build/channel"
+
+      - name: Verify both new packages and preserve previous release
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          root = Path('build/channel')
+          names = {
+              'linux-64': ('mojara-1.2.5-hb0f4dca_0.conda', 'mojara-1.2.6-hb0f4dca_0.conda'),
+              'linux-aarch64': ('mojara-1.2.6-he8cfe8b_0.conda',),
+          }
+          for platform, required in names.items():
+              index = json.loads((root / platform / 'repodata.json').read_text())
+              for name in required:
+                  assert (root / platform / name).is_file(), name
+                  assert name in index.get('packages.conda', {}), name
+              print(f'PASS: {platform}: {list(required)}')
+          PY
+
+      - name: Save channel indexing diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: channel-metadata-diagnostics
+          path: |
+            build/channel/linux-64/repodata.json
+            build/channel/linux-aarch64/repodata.json
+          if-no-files-found: ignore
