@@ -39,7 +39,7 @@ jobs:
       - name: Install Pixi and Mojo 1.2.0
         uses: prefix-dev/setup-pixi@v0.9.3
         with:
-          cache: true
+          cache: false
       - name: Verify runner and compiler
         run: pixi run bash scripts/verify-platform.sh
       - name: Compile native Mojo CLI
