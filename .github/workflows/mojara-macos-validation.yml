@@ -1,30 +1,80 @@
-name: macOS Apple Silicon validation (experimental)
+name: macOS Apple Silicon framework validation
 
 on:
+  pull_request:
+    paths:
+      - 'source/**'
+      - 'scripts/ci/bootstrap-source.sh'
+      - 'scripts/ci/build-macos-sdk.sh'
+      - 'scripts/build-cli.sh'
+      - 'pixi.toml'
+      - '.github/workflows/mojara-macos-validation.yml'
   workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: mojara-macos-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  macos-cli:
-    name: Mojara CLI / osx-arm64
+  macos-framework:
+    name: Native Mojo framework, CLI and HTTP / osx-arm64
     runs-on: macos-15
-    timeout-minutes: 45
+    timeout-minutes: 65
     steps:
       - uses: actions/checkout@v4
-      - name: Install Pixi and Mojo 1.2.0
+      - name: Confirm Apple Silicon host
+        run: |
+          test "$(uname -sm)" = "Darwin arm64"
+          xcrun --find clang
+      - name: Install native Mojo and Conda libraries
         uses: prefix-dev/setup-pixi@v0.9.3
         with:
           cache: false
-      - name: Verify macOS and Mojo
-        run: pixi run bash scripts/verify-platform.sh
-      - name: Compile CLI natively on Apple Silicon
-        run: pixi run bash scripts/build-cli.sh
-      - name: Verify project creation
+      - name: Recover checksum-verified upstream Mojo source
+        run: pixi run bash scripts/ci/bootstrap-source.sh
+      - name: Compile Mach-O native bridges, Mojo framework and CLI
+        run: pixi run bash scripts/ci/build-macos-sdk.sh
+      - name: Build a generated macOS application
         run: |
-          ./build/bin/mojara new hello-mac
+          set -Eeuo pipefail
+          export MOJARA_HOME="$GITHUB_WORKSPACE/build/full-integration/sdk"
+          export DYLD_LIBRARY_PATH="$MOJARA_HOME/lib:$GITHUB_WORKSPACE/.pixi/envs/default/lib:${DYLD_LIBRARY_PATH:-}"
+          export PATH="$GITHUB_WORKSPACE/.pixi/envs/default/bin:$PATH"
+          "$MOJARA_HOME/bin/mojara" new hello-mac
           test -f hello-mac/app.mojo
           test -f hello-mac/mojara.project
-          ! test -e hello-mac/pixi.toml
-          echo "macOS CLI smoke test passed."
+          test ! -e hello-mac/pixi.toml
+          cd hello-mac
+          "$MOJARA_HOME/bin/mojara" build
+          test -x build/app
+      - name: Verify HTTP health from real Mojo server
+        run: |
+          set -Eeuo pipefail
+          export MOJARA_HOME="$GITHUB_WORKSPACE/build/full-integration/sdk"
+          export DYLD_LIBRARY_PATH="$MOJARA_HOME/lib:$GITHUB_WORKSPACE/.pixi/envs/default/lib:${DYLD_LIBRARY_PATH:-}"
+          export PATH="$GITHUB_WORKSPACE/.pixi/envs/default/bin:$PATH"
+          cd hello-mac
+          MOJARA_HOST=127.0.0.1 MOJARA_PORT=18881 "$MOJARA_HOME/bin/mojara" start --local > ../build/macos-app.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true' EXIT
+          for i in $(seq 1 40); do
+            if curl -fsS --max-time 1 http://127.0.0.1:18881/health -o ../build/macos-health.json; then
+              python3 -c 'import json; d=json.load(open("../build/macos-health.json")); assert d == {"status":"ok","framework":"Mojara"},d'
+              echo "PASS: Mojara served HTTP on Apple Silicon"
+              exit 0
+            fi
+            sleep 1
+          done
+          tail -100 ../build/macos-app.log
+          exit 1
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: macos-native-integration-diagnostics
+          path: |
+            build/macos-app.log
+            build/macos-health.json
+          if-no-files-found: ignore
