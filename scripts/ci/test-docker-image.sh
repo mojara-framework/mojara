@@ -10,6 +10,11 @@ chmod 777 "$TEST_DIR"
 cleanup() {
   docker logs "$NAME" 2>/dev/null || true
   docker rm -f "$NAME" >/dev/null 2>&1 || true
+  # Container-created files may be owned by Ubuntu's uid 1000, while
+  # GitHub's ARM64 runner uses a different host uid. Clean within Docker.
+  docker run --rm --platform "$PLATFORM" --user 0:0 \
+    -v "$TEST_DIR:/workspace" --entrypoint /bin/sh "$IMAGE" \
+    -c 'rm -rf -- /workspace/docker-smoke' >/dev/null 2>&1 || true
   rm -rf -- "$TEST_DIR"
 }
 trap cleanup EXIT
