@@ -159,15 +159,17 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
+          # Release workflow updates must not make an existing version fail.
+          # Never modify a previously published package or move its tag.
+          if gh release view v1.2.7 >/dev/null 2>&1; then
+            echo "Mojara v1.2.7 already published; preserving its original source commit and assets"
+            exit 0
+          fi
           MAIN_HEAD="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq '.object.sha')"
           test "$MAIN_HEAD" = "$RELEASE_COMMIT" || {
             echo "Main moved during release qualification; refusing stale release" >&2
             exit 1
           }
-          if gh release view v1.2.7 >/dev/null 2>&1; then
-            echo "v1.2.7 already published; refusing automatic overwrite" >&2
-            exit 1
-          fi
           cat > RELEASE_NOTES.md <<'NOTES'
           ## Mojara 1.2.7
 
