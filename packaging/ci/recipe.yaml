@@ -15,6 +15,18 @@ build:
   script: bash ${{ RECIPE_DIR }}/build.sh
 
 requirements:
+  host:
+    - libpq
+    - mariadb-connector-c
+    - openssl >=3
+    - sqlite
+    - zlib
+    - libdeflate
+    - brotli
+    - libsodium
+    - simdjson >=4,<5
+    - libgcc-ng
+    - libstdcxx-ng
   run:
     - mojo ==1.2.0
     - watchexec >=2.7,<3
@@ -27,6 +39,8 @@ requirements:
     - brotli
     - libsodium
     - simdjson >=4,<5
+    - libgcc-ng
+    - libstdcxx-ng
 
 tests:
   - script:

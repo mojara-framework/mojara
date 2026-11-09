@@ -14,9 +14,32 @@ build:
   script: bash ${{ RECIPE_DIR }}/build.sh
 
 requirements:
+  host:
+    - libpq
+    - mariadb-connector-c
+    - openssl >=3
+    - sqlite
+    - zlib
+    - libdeflate
+    - brotli
+    - libsodium
+    - simdjson >=4,<5
+    - libgcc-ng
+    - libstdcxx-ng
   run:
     - mojo ==1.2.0
     - watchexec >=2.7,<3
+    - libpq
+    - mariadb-connector-c
+    - openssl >=3
+    - sqlite
+    - zlib
+    - libdeflate
+    - brotli
+    - libsodium
+    - simdjson >=4,<5
+    - libgcc-ng
+    - libstdcxx-ng
 
 tests:
   - script:
@@ -28,7 +51,7 @@ about:
   documentation: https://mojara.kasua.ng/docs/
   summary: Native Mojo web framework SDK and developer command-line tool
   description: |
-    Mojara for Mojo 1.2.0, Linux x86-64. Includes the precompiled Mojara
+    Mojara for Mojo 1.2.0. Includes the precompiled Mojara
     native Mojo framework with asynchronous database jobs, MySQL/PostgreSQL/SQLite schema migrations, and the Flare HTTP reactor.
   license: MIT
   license_file: mojara/LICENSE
