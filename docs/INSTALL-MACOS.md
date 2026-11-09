@@ -96,4 +96,4 @@ This method **does not use Docker**. The compiler still runs on Linux x86-64 ins
 
 ## Mojara release
 
-The [Mojara 1.2.7 release](https://github.com/mojara-framework/mojara/releases/tag/v1.2.7) provides native Conda packages for Linux x86-64, Linux ARM64 and Apple Silicon. Intel Macs run the Linux x86-64 package using the Docker setup above.
+The [Mojara 1.2.7 release](https://github.com/mojara-framework/mojara/releases/tag/v1.2.7) provides native Conda packages for Linux x86-64, Linux ARM64 and Apple Silicon. Intel Macs run the Linux x86-64 package through Docker Desktop or the Lima Linux virtual machine described above.
