@@ -23,7 +23,7 @@ Linux kernel or macOS (native Windows planned)
 
 ## Required external dependencies
 
-The released SDK bundles precompiled, platform-specific components such as the Mojo compiler dependencies, Flare, JSON, native connector libraries and additional bridges. **Those binaries are not source files.** This repository preserves the complete first-party source shipped in v1.2.5, but a fully self-hosted source build remains incomplete until upstream dependency revisions and bridge build inputs have been pinned and validated. Do not copy x86-64 `.so` files into an ARM64 or macOS package.
+The Mojo framework, native CLI and first-party C bridges are compiled from the repository source for each target architecture. Flare, JSON, Morph and SQLite source files are retrieved directly from independently pinned upstream commits, adjusted with tracked compatibility patches and verified by file hashes. The external Mojo compiler and native connector development libraries are installed through platform-specific Conda dependencies. The transaction-pool extension still requires its complete independent native source and ABI verification. Do not reuse compiled libraries across CPU architectures.
 
 ## Runtime and platform boundaries
 
