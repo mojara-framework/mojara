@@ -20,4 +20,3 @@ The included C regression tests were recovered from a prior v1.0.0 SDK source te
 
 The v1.2.5 SDK bundles third-party precompiled Mojo modules, dynamic native connectors and a transaction-pool extension for which **not all source build inputs appear in that SDK source directory**. This GitHub repository does not yet provide a fully self-contained, dependency-locked source build. See [issue #3](https://github.com/mojara-framework/mojara/issues/3) for the remaining work.
 
-Do not delete local development work or an existing WSL distribution assuming that this repository necessarily contains every uncommitted source file. Follow the [WSL reset checklist](WSL-RESET.md).
