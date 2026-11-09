@@ -92,8 +92,8 @@ jobs:
           asset_name="$(basename "$PKG")"
           existing="$(gh release view v1.2.7 --json assets --jq '.assets[].name')"
           if printf '%s\n' "$existing" | grep -Fxq "$asset_name"; then
-            echo "Mac package asset already exists; refusing to overwrite"
-            exit 1
+            echo "Mojara v1.2.7 macOS package is already published; preserving its original qualified asset"
+            exit 0
           fi
           gh release upload v1.2.7 "$PKG" SHA256SUMS-osx-arm64
           gh release view v1.2.7 --json body --jq '.body' > RELEASE_NOTES.md
