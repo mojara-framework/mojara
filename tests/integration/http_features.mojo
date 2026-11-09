@@ -5,7 +5,7 @@ deliberately nonproduction values, and no user credentials are referenced.
 """
 
 from mojara import App, Request, Response, CookieSessionStore
-from mojara.web import UploadFile
+from mojara.web import UploadFile, UploadFiles
 from mojara.forms import parse_request_form
 
 
@@ -59,6 +59,17 @@ def main() raises:
             "private_uploads",
             max_bytes=1024,
             required_token="ci-upload-token-32-characters-minimum",
+        ),
+    )
+    app.post_handler(
+        "/uploads",
+        UploadFiles(
+            "private_uploads",
+            max_file_bytes=1024,
+            max_total_bytes=2048,
+            max_files=2,
+            required_token="ci-upload-token-32-characters-minimum",
+            allowed_mime_types="text/plain",
         ),
     )
     app.run_configured()
