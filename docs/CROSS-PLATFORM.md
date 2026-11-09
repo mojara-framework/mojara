@@ -1,28 +1,29 @@
-# Cross-platform development and verification
+# Cross-platform build and test status
 
-This repository starts with the Mojo CLI portability smoke checks.
+Mojara is published for Linux x86-64. Its first-party source is being prepared for other platforms. The three targets require **different degrees of testing**.
 
-## GitHub Actions
+## Automated GitHub Actions checks
 
-Open **Actions → Mojara cross-platform CI** in this repository, then choose **Run workflow**. Pushes affecting the CLI, scripts, Pixi manifest or workflow also start the checks automatically.
+| Workflow | Target | Trigger | Test scope |
+| --- | --- | --- | --- |
+| [Mojara Linux portability CI](../.github/workflows/mojara-cross-platform.yml) | Linux x86-64 + Linux ARM64 | Push, PR, manual | Native Mojo CLI build and starter project generation |
+| [Native bridge regressions](../.github/workflows/native-bridge-regressions.yml) | Linux x86-64 + Linux ARM64 | Push, PR, manual | File serving, uploads, telemetry C API tests |
+| [macOS Apple Silicon validation](../.github/workflows/mojara-macos-validation.yml) | macOS 15 Apple Silicon | **Manual** | Native CLI and starter project generation; experimental |
 
-| Target | GitHub runner | Current gate |
-|---|---|---|
-| Linux x86-64 | `ubuntu-24.04` | Native CLI compilation and project creation |
-| Linux ARM64 | `ubuntu-24.04-arm` | Native CLI compilation and project creation |
-| macOS Apple Silicon | `macos-15` | Native CLI compilation and project creation |
+macOS validation is manual while GitHub-hosted macOS runners are frequently queued. You can run it from **Actions → macOS Apple Silicon validation (experimental) → Run workflow**. The Linux jobs are intentionally independent so a queued Mac runner does not falsely mark the Linux checks as failed.
 
-Passing these gates does not imply that Mojara's native HTTP server, WebSockets, MySQL, PostgreSQL, uploads, database transactions, concurrency and shutdown have passed on that target.
+## Actual platform support
 
-## Required release gates
+| Target | CLI | Native regression tests | Full app | Production package |
+| --- | --- | --- | --- | --- |
+| Linux x86-64 | Verified | Verified | Verified for 1.2.5 on a local server | **Released (1.2.5)** |
+| Linux ARM64 | Verified | Verified | Not verified | Not released |
+| macOS Apple Silicon | Runner-dependent | Not verified | Not verified | Not released |
+| Windows through WSL2 x86-64 | Existing Linux setup | Via Linux | Via Linux | Supported via Linux package |
+| Native Windows | No native Mojo toolchain yet | Not verified | Not verified | Not released |
 
-1. Build the full framework against Mojo 1.2.0 and platform-appropriate Flare, JSON and native dependencies.
-2. Recompile every C bridge for the host architecture; do not reuse Linux x86-64 shared objects on ARM64 or macOS.
-3. Validate native HTTP serving, templates, uploads, WebSockets, MySQL/PostgreSQL, transactions and concurrent requests.
-4. Validate stop/restart, development watcher, and CLI packaging on each native host.
-5. Package in `linux-64`, `linux-aarch64` and `osx-arm64` Conda subdirectories, and verify a **fresh `pixi global install`** per platform.
-6. Only then label ARM64/macOS supported.
+**CLI success is not a complete framework port.** Before adding a platform to the supported list, follow [the full release checklist](RELEASE-CHECKLIST.md).
 
-Windows native is blocked on availability of a compatible official Mojo compiler/runtime; WSL2 remains the supported Windows path.
+## Native Mojo Windows
 
-**No CI job in this initial workflow publishes packages or updates the public release channel.**
+Modular announced in August 2026 that it is working with Microsoft's Windows team on native Windows support. Official system requirements still list Windows via WSL2. Follow [Windows notes](WINDOWS.md) for current details.

@@ -1,28 +1,34 @@
-name: Mojara cross-platform CI
+name: Mojara Linux portability CI
 
 on:
   push:
     paths:
       - '.github/workflows/mojara-cross-platform.yml'
       - 'pixi.toml'
-      - 'source/**'
-      - 'scripts/**'
+      - 'source/cli/**'
+      - 'scripts/build-cli.sh'
+      - 'scripts/verify-platform.sh'
   pull_request:
     paths:
       - '.github/workflows/mojara-cross-platform.yml'
       - 'pixi.toml'
-      - 'source/**'
-      - 'scripts/**'
+      - 'source/cli/**'
+      - 'scripts/build-cli.sh'
+      - 'scripts/verify-platform.sh'
   workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: mojara-linux-cli-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   cli:
-    name: CLI and project generator / ${{ matrix.target }}
+    name: Native CLI and project generator / ${{ matrix.target }}
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 35
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -31,11 +37,8 @@ jobs:
             target: linux-64
           - runner: ubuntu-24.04-arm
             target: linux-aarch64
-          - runner: macos-15
-            target: osx-arm64
     steps:
-      - name: Checkout source
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
       - name: Install Pixi and Mojo 1.2.0
         uses: prefix-dev/setup-pixi@v0.9.3
         with:
@@ -53,4 +56,4 @@ jobs:
           test -f hello-ci/templates/index.html
           test -f hello-ci/static/style.css
           ! test -e hello-ci/pixi.toml
-          echo "CLI and project-generation smoke tests passed: ${{ matrix.target }}"
+          echo "Native CLI / project creation passed: ${{ matrix.target }}"
