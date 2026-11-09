@@ -44,7 +44,11 @@ int mj_sp_last_code(void) { return last_code; }
 
 static struct timespec wait_deadline(int ms) {
     struct timespec end = {0, 0};
+#if defined(__APPLE__)
+    clock_gettime(CLOCK_REALTIME, &end);
+#else
     clock_gettime(CLOCK_MONOTONIC, &end);
+#endif
     end.tv_sec += ms / 1000;
     end.tv_nsec += (long)(ms % 1000) * 1000000L;
     if (end.tv_nsec >= 1000000000L) { end.tv_nsec -= 1000000000L; end.tv_sec++; }
@@ -76,8 +80,13 @@ void *mj_sp_open(const char *path, int max_connections, int wait_ms) {
     if (pthread_condattr_init(&attr)) {
         pthread_mutex_destroy(&pool->mutex); free(pool); fail(MJ_SP_INVALID); return NULL;
     }
+#if defined(__APPLE__)
+    /* Darwin's default pthread condition variable clock is realtime. */
+    int rc = pthread_cond_init(&pool->available, &attr);
+#else
     int rc = pthread_condattr_setclock(&attr, CLOCK_MONOTONIC);
     if (rc == 0) rc = pthread_cond_init(&pool->available, &attr);
+#endif
     pthread_condattr_destroy(&attr);
     if (rc != 0) { pthread_mutex_destroy(&pool->mutex); free(pool); fail(MJ_SP_INVALID); return NULL; }
     pool->capacity = max_connections;
