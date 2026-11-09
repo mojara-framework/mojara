@@ -8,7 +8,7 @@ Mojara is an open-source, Mojo-first web framework for routing, HTTP APIs, templ
 
 ## Install
 
-Install Mojara with Pixi on Linux x86-64, Linux ARM64, macOS Apple Silicon, or Windows with WSL2 Ubuntu. No source checkout is required.
+Install Mojara with Pixi on Linux x86-64, Linux ARM64, macOS Apple Silicon, or Windows with WSL2 Ubuntu. Intel Macs run Mojara through Docker Desktop using the supported Linux x86-64 package. No source checkout is required.
 
 ```bash
 pixi global install 'mojara==1.2.7' \
@@ -48,7 +48,7 @@ See [Architecture](docs/ARCHITECTURE.md) for component boundaries, [verified sou
 | Linux ARM64 (AArch64) | **Supported** |
 | Windows 10/11 with WSL2 Ubuntu (x86-64) | **Supported** |
 | macOS Apple Silicon | **Supported** |
-| macOS Intel | Not yet supported |
+| macOS Intel through Docker (Linux x86-64) | **Supported** |
 | Windows native | Not yet supported |
 
 See [macOS installation](docs/INSTALL-MACOS.md) and [Windows setup](docs/WINDOWS.md) for platform-specific guidance.
@@ -63,6 +63,7 @@ source/
 tests/native/             Executable native regression tests
 scripts/                  Source-development build/test commands
 packaging/conda/          Source-native multi-architecture Conda release recipe
+packaging/docker/         Intel Mac Docker-based Linux x86-64 environment
 docs/                     Tutorials, complete Mojara API reference and release process
 .github/workflows/        Platform matrix and native regression CI
 ```
