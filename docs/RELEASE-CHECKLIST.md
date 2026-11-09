@@ -19,4 +19,4 @@ This is the minimum gate for publishing any new Mojara package. Passing the CLI-
 
 ## Current release
 
-Mojara **1.2.5** is the published Linux x86-64 package. Independently rebuilt CI package candidates for Linux x86-64 and ARM64 have passed the framework integration and fresh-runner install suites. These candidates are unpublished and do not satisfy the complete release checklist. macOS and native Windows releases are not qualified.
+Mojara **1.2.6** is publicly released with verified Linux x86-64 and ARM64 packages and SHA-256 checksums on GitHub. The custom Conda channel still needs the ARM64 package and updated index. Independent third-party source pinning, remaining overlinking diagnostics and macOS/native Windows qualification remain outstanding.

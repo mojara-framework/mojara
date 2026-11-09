@@ -2,6 +2,15 @@
 
 All notable changes are recorded here. Dates are in UTC.
 
+## 1.2.6 — 2026-11-09
+
+- Published native Linux x86-64 and ARM64 Conda packages with SHA-256 checksums as verified GitHub Release assets.
+- Compiled the Mojo CLI for baseline host CPUs to avoid runner-specific instruction requirements.
+- Linked native database bridges against declared Conda dependencies and verified relocatable runtime library lookup.
+- Added independent installed-package PostgreSQL and MariaDB prepared-query and transaction integration tests.
+- Validated signed sessions, uploads, WebSockets, concurrent requests and shutdown on both Linux architectures.
+- Added gated release automation and public API reference documentation.
+
 ## 1.2.5 — 2026-11-09
 
 - Fixed the Conda/Pixi global launcher to resolve its real installation prefix when invoked through a symlink.
@@ -23,4 +32,4 @@ All notable changes are recorded here. Dates are in UTC.
 - Added automated Linux x86-64 / ARM64 native bridge regression tests.
 - Added source documentation, contribution policies and release gates.
 
-The repository work is **not** a new Mojara binary release. Native Windows, Linux ARM64 and macOS are not yet production-supported.
+Native Windows and macOS remain unqualified for public packages. The GitHub Linux release is available; deployment to the separately hosted custom Conda channel remains pending.

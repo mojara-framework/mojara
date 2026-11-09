@@ -2,7 +2,7 @@
 
 ## Reliability first
 
-- [x] Publish Mojara v1.2.5 global install for Linux x86-64.
+- [x] Publish native Linux x86-64 and ARM64 packages as verified GitHub Release assets.
 - [x] Add the full first-party Mojo and C source from the published SDK.
 - [x] Add native C regression tests for uploads, file serving and telemetry.
 - [x] Test native Mojo CLI and project generation on Linux x86-64 and ARM64.
@@ -11,11 +11,15 @@
 - [x] Compile complete native Mojo framework, generated application and HTTP/static routes on Linux ARM64.
 - [x] Verify live Mojo PostgreSQL and MariaDB prepared queries and transaction controls on ARM64.
 - [x] Complete HTTP, WebSocket, databases, uploads and shutdown integration checks on ARM64.
-- [x] Build and fresh-install unpublished native Conda candidates for Linux x86-64 and ARM64, including clean-runner application smoke tests.
-- [ ] Eliminate unresolved shared-library dependencies and document native package relocation requirements.
+- [x] Build and fresh-install native Conda packages for Linux x86-64 and ARM64, including real packaged PostgreSQL/MariaDB and HTTP smoke tests.
+- [x] Verify zero unresolved installed native shared-library dependencies on clean hosts.
+- [ ] Complete the native ABI/provenance audit and account for remaining system-runtime overlinking warnings.
 - [ ] Compile the framework and all native bridges on Apple Silicon and run integration tests.
-- [ ] Publish and freshly install `linux-aarch64` and `osx-arm64` Conda packages.
-- [ ] Add reproducible, signed/checksummed multi-platform release automation.
+- [x] Publish and freshly install the Linux ARM64 GitHub Release package.
+- [ ] Update the custom Conda channel for Linux ARM64 and verify its indexed installer.
+- [ ] Compile and publish a verified macOS ARM64 package.
+- [x] Add checksum-verified Linux multi-platform release automation.
+- [ ] Add cryptographic build provenance and independent upstream source pinning.
 
 ## Windows
 
