@@ -65,3 +65,37 @@ jobs:
             build/full-integration/fresh-install-server.log
             build/full-integration/fresh-install-health.json
           if-no-files-found: ignore
+
+  fresh-runner:
+    name: Fresh host install without C build dependencies / ${{ matrix.target }}
+    needs: ci-package
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            target: linux-64
+          - runner: ubuntu-24.04-arm
+            target: linux-aarch64
+    steps:
+      - uses: actions/checkout@v4
+      - uses: prefix-dev/setup-pixi@v0.9.3
+        with:
+          cache: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: unpublished-native-package-${{ matrix.target }}
+          path: build/fresh-package-download
+      - name: Install candidate and compile/run Mojo application on clean host
+        run: bash scripts/ci/fresh-runner-install.sh
+      - name: Upload fresh-runner diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fresh-runner-logs-${{ matrix.target }}
+          path: |
+            build/fresh-package-verify/isolated-server.log
+            build/fresh-package-verify/isolated-health.json
+          if-no-files-found: ignore
