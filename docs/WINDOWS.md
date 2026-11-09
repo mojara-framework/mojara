@@ -2,7 +2,7 @@
 
 ## Windows today: use WSL2
 
-Mojara 1.2.5 runs natively on Linux x86-64. On Windows 11, install WSL2 with Ubuntu and install Mojara **inside Ubuntu**. The Mojo compiler and the application run in Linux, not as native Windows executables.
+Mojara 1.2.6 supports Linux x86-64 and ARM64. On Windows 11, install WSL2 with Ubuntu and install Mojara **inside Ubuntu**. The Mojo compiler and the application run in Linux, not as native Windows executables.
 
 From PowerShell you can invoke the installed Linux CLI:
 

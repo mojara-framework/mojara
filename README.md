@@ -8,25 +8,14 @@ Mojara is an open-source, Mojo-first web framework for routing, HTTP APIs, templ
 
 ## Install
 
-**Official Linux x86-64 and ARM64 packages:** [Mojara 1.2.6 release](https://github.com/mojara-framework/mojara/releases/tag/v1.2.6). Install using Pixi and the package matching your CPU. You do not need to clone this repository.
-
-### Linux ARM64
+Install Mojara using Pixi on Linux x86-64, Linux ARM64, or Windows with WSL2 Ubuntu. No source checkout is required.
 
 ```bash
-curl -fLO https://github.com/mojara-framework/mojara/releases/download/v1.2.6/mojara-1.2.6-he8cfe8b_0.conda
-pixi global install --path ./mojara-1.2.6-he8cfe8b_0.conda \
-  -c https://conda.modular.com/max/ -c conda-forge
+pixi global install 'mojara==1.2.6' \
+  -c https://mojara.kasua.ng/conda/ \
+  -c https://conda.modular.com/max/ \
+  -c conda-forge
 ```
-
-### Linux x86-64 (including Windows WSL2)
-
-```bash
-curl -fLO https://github.com/mojara-framework/mojara/releases/download/v1.2.6/mojara-1.2.6-hb0f4dca_0.conda
-pixi global install --path ./mojara-1.2.6-hb0f4dca_0.conda \
-  -c https://conda.modular.com/max/ -c conda-forge
-```
-
-The [SHA256SUMS](https://github.com/mojara-framework/mojara/releases/download/v1.2.6/SHA256SUMS) file provides checksums for both binaries. The separately hosted `mojara.kasua.ng` Conda channel is not yet updated with the ARM64 package, so install it using the GitHub Release until that channel is indexed.
 
 Then use Mojara anywhere:
 
@@ -76,8 +65,6 @@ packaging/conda/          Source-native multi-architecture Conda release recipe
 docs/                     Tutorials, complete Mojara API reference and release process
 .github/workflows/        Platform matrix and native regression CI
 ```
-
-**Source build note:** The complete first-party Mojo library, CLI and native C bridge code are in this repository. Third-party Mojo modules are currently recovered from a checksum-pinned source bundle; independently pinned upstream revisions and complete extension provenance remain release-hardening work.
 
 ## Development and community
 
