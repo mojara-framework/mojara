@@ -6,21 +6,19 @@ The channel contains earlier Linux x86-64 releases. **Preserve those packages**;
 
 ## Prepare the real channel host
 
-Install a current channel indexer in an isolated Python environment:
+Install the native channel indexer through Pixi:
 
 ~~~bash
-python3 -m venv ~/mojara-conda-index
-~/mojara-conda-index/bin/pip install 'conda-index>=0.13,<0.14'
+pixi global install rattler-index -c conda-forge
 ~~~
 
-From the checked-out Mojara repository, run the publication script using the **actual absolute filesystem directory** served by the existing \`/conda/\` URL:
+From the checked-out Mojara repository, run the publication script using the **actual absolute filesystem directory** served by the existing `/conda/` URL:
 
 ~~~bash
-CONDA_INDEX_PYTHON=~/mojara-conda-index/bin/python \
-  bash scripts/release/publish-conda-channel.sh /actual/path/to/conda
+bash scripts/release/publish-conda-channel.sh /actual/path/to/conda
 ~~~
 
-The script verifies the existing channel is complete; downloads both release binaries and GitHub SHA-256 checksums; refuses to overwrite different packages; retains earlier releases; regenerates \`repodata.json\` for \`linux-64\`, \`linux-aarch64\`, and \`noarch\`; and checks the version, file name and checksum inside the new indexes.
+The script verifies the existing channel is complete; downloads both release binaries and GitHub SHA-256 checksums; refuses to overwrite different packages; retains earlier releases; regenerates `repodata.json` using `rattler-index` for `linux-64`, `linux-aarch64`, and `noarch`; and checks the version, file name and checksum inside the new indexes.
 
 The channel directory path depends on the host's Nginx or object-storage configuration. Do not guess it. The script does not access unrelated servers or publish automatically.
 

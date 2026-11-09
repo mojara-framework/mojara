@@ -3,17 +3,18 @@
 set -Eeuo pipefail
 
 if [[ $# -ne 1 || "$1" != /* ]]; then
-  echo "Usage: CONDA_INDEX_PYTHON=/path/to/python $0 /absolute/path/to/conda" >&2
+  echo "Usage: $0 /absolute/path/to/conda" >&2
   exit 2
 fi
 
 CHANNEL="$1"
 RELEASE="https://github.com/mojara-framework/mojara/releases/download/v1.2.6"
-INDEX_PYTHON="\${CONDA_INDEX_PYTHON:-python3}"
+INDEXER="${MOJARA_CHANNEL_INDEXER:-rattler-index}"
 command -v curl >/dev/null || { echo "curl required" >&2; exit 2; }
 command -v flock >/dev/null || { echo "flock required" >&2; exit 2; }
-"$INDEX_PYTHON" -m conda_index --help >/dev/null 2>&1 || {
-  echo "conda-index is required (set CONDA_INDEX_PYTHON)." >&2; exit 2;
+command -v "$INDEXER" >/dev/null || {
+  echo "rattler-index is required. Install with: pixi global install rattler-index -c conda-forge" >&2
+  exit 2
 }
 [[ -d "$CHANNEL/linux-64" ]] || {
   echo "Cannot find existing linux-64 channel: $CHANNEL" >&2; exit 2;
@@ -22,7 +23,7 @@ CHANNEL="$(cd "$CHANNEL" && pwd -P)"
 
 # Prevent discarding entries from a channel whose indexed packages are
 # actually on remote storage or otherwise missing from this filesystem.
-"$INDEX_PYTHON" - "$CHANNEL" <<'PY'
+python3 - "$CHANNEL" <<'PY'
 import json
 import pathlib
 import sys
@@ -89,9 +90,9 @@ for platform in linux-64 linux-aarch64; do
   fi
 done
 
-"$INDEX_PYTHON" -m conda_index "$CHANNEL" --no-channeldata --no-rss
+"$INDEXER" fs "$CHANNEL"
 
-"$INDEX_PYTHON" - "$CHANNEL" "$TEMP" <<'PY'
+python3 - "$CHANNEL" "$TEMP" <<'PY'
 import hashlib
 import json
 import pathlib
