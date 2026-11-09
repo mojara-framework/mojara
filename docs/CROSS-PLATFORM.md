@@ -1,6 +1,6 @@
 # Cross-platform build and test status
 
-Mojara publishes native Linux x86-64 and ARM64 packages in GitHub Releases. Its cross-platform source and tests continue to expand for other targets.
+Mojara publishes native Conda packages for Linux x86-64, Linux ARM64 and macOS Apple Silicon. Native Windows and Intel macOS are not yet supported.
 
 ## Automated GitHub Actions checks
 
@@ -12,9 +12,10 @@ Mojara publishes native Linux x86-64 and ARM64 packages in GitHub Releases. Its 
 | [Full Linux framework integration](../.github/workflows/full-linux-integration.yml) | Linux x86-64 + Linux ARM64 | Push, PR, manual | Source-built SDK, HTTP, sessions, uploads, WebSockets, concurrency, shutdown and real SQL |
 | [Native Conda package fresh-install qualification](../.github/workflows/ci-package.yml) | Linux x86-64 + Linux ARM64 | Push, PR, manual | Package build, fresh Pixi install, native app, HTTP and dependency verification on a clean runner |
 | [Native Linux release qualification](../.github/workflows/release-linux.yml) | Linux x86-64 + Linux ARM64 | PR, qualified main CI, manual | Public-ready package build, independent fresh installation, live SQL and gated GitHub publication |
-| [macOS Apple Silicon validation](../.github/workflows/mojara-macos-validation.yml) | macOS 15 Apple Silicon | **Manual** | Native CLI and starter project generation; experimental |
+| [macOS Apple Silicon qualification](../.github/workflows/mojara-macos-26-validation.yml) | macOS 26 Apple Silicon | Main, PR, manual | Mach-O native bridges, full Mojo framework, generated application, HTTP, Conda package and independent clean installation |
+| [macOS 15 compatibility check](../.github/workflows/mojara-macos-validation.yml) | macOS 15 Apple Silicon | Manual | Additional compatibility validation |
 
-macOS validation is manual while GitHub-hosted macOS runners are frequently queued. You can run it from **Actions → macOS Apple Silicon validation (experimental) → Run workflow**. The Linux jobs are intentionally independent so a queued Mac runner does not falsely mark the Linux checks as failed.
+Apple Silicon package qualification runs on macOS 26 independently of the Linux CI matrix. The macOS 15 compatibility check is available manually.
 
 ## Platform support
 
@@ -23,10 +24,11 @@ macOS validation is manual while GitHub-hosted macOS runners are frequently queu
 | Linux x86-64 | **Supported** |
 | Linux ARM64 (AArch64) | **Supported** |
 | Windows 10/11 with WSL2 Ubuntu (x86-64) | **Supported** |
-| macOS Apple Silicon | Experimental |
+| macOS Apple Silicon | **Supported** |
+| macOS Intel | Not yet supported |
 | Native Windows | Not yet supported |
 
-For release downloads, see the [Mojara 1.2.6 release](https://github.com/mojara-framework/mojara/releases/tag/v1.2.6). The official Mojara Conda channel serves both Linux architectures.
+For release downloads, see [Mojara 1.2.7](https://github.com/mojara-framework/mojara/releases/tag/v1.2.7). The Mojara Conda channel serves Linux x86-64, Linux ARM64 and macOS Apple Silicon.
 
 ## Native Mojo Windows
 

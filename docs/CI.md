@@ -16,13 +16,13 @@ These workflows run on relevant pushes and pull requests. They can also be run f
 
 The [public channel install workflow](../.github/workflows/channel-install.yml) checks that Mojara installs by package name and serves HTTP on fresh Linux x86-64 and ARM64 runners.
 
-## Optional macOS checks
+## macOS Apple Silicon
 
-**macOS Apple Silicon validation (experimental)** runs only when requested manually. GitHub may queue the job until an Apple Silicon runner becomes available. A job in a queued state has not tested the project and must not be recorded as a compilation failure.
+The [macOS 26 Apple Silicon workflow](../.github/workflows/mojara-macos-26-validation.yml) builds Mach-O C bridges and the full Mojo framework, compiles and serves an application, builds an `osx-arm64` Conda package, then installs the package on a separate clean Apple Silicon runner and serves HTTP again. The [macOS 15 compatibility workflow](../.github/workflows/mojara-macos-validation.yml) is available manually.
 
 ## Release qualification gaps
 
-The release workflow builds native packages for both Linux CPU architectures, then independently installs them and verifies native links, real PostgreSQL and MariaDB prepared SQL, and generated application HTTP startup. Outstanding work covers independently pinned upstream source revisions, the full transaction-pool extension, deeper SSE/deployment coverage, platform-specific ABI diagnostics and native macOS validation.
+The release workflow builds native packages for both Linux CPU architectures, then independently installs them and verifies native links, real PostgreSQL and MariaDB prepared SQL, and generated application HTTP startup. Outstanding work covers independently pinned upstream source revisions, the full transaction-pool extension, deeper SSE/deployment coverage, platform-specific ABI diagnostics and extended macOS service integrations.
 
 For the source-level declarations available to application developers, see the [Mojara API reference](API-REFERENCE.md).
 

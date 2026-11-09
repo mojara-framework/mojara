@@ -14,10 +14,10 @@
 - [x] Build and fresh-install native Conda packages for Linux x86-64 and ARM64, including real packaged PostgreSQL/MariaDB and HTTP smoke tests.
 - [x] Verify zero unresolved installed native shared-library dependencies on clean hosts.
 - [ ] Complete the native ABI/provenance audit and account for remaining system-runtime overlinking warnings.
-- [ ] Compile the framework and all native bridges on Apple Silicon and run integration tests.
+- [x] Compile the framework and native bridges on Apple Silicon; run generated HTTP application integration.
 - [x] Publish and freshly install the Linux ARM64 GitHub Release package.
 - [x] Publish Mojara 1.2.6 to the custom Conda channel for Linux x86-64 and ARM64.
-- [ ] Compile and publish a verified macOS ARM64 package.
+- [x] Package and independently clean-install a native macOS ARM64 release.
 - [x] Add checksum-verified Linux multi-platform release automation.
 - [ ] Add cryptographic build provenance and independent upstream source pinning.
 
