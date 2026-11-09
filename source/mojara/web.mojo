@@ -176,10 +176,20 @@ struct UploadFile(Copyable, Handler):
             var code = 413 if status == -2 else (500 if status == -3 else 400)
             var invalid = Response.error(code, "Upload rejected")
             return (invalid^).into_wire()
+        # Copy the native output bytes through a bounded Mojo List before
+        # turning them into UTF-8. Direct unsafe_from_utf8_ptr construction
+        # returned an empty string on both Linux ARM64 and x86-64 with
+        # Mojo 1.2.0, even though C had saved the file successfully.
+        var name_bytes = List[UInt8]()
+        for i in range(len(filename)):
+            var character = filename[i]
+            if character == 0:
+                break
+            name_bytes.append(character)
+        if len(name_bytes) != 43:
+            raise Error("Native upload returned an invalid stored filename")
         var stored = String(
-            unsafe_from_utf8_ptr=Pointer[UInt8, MutUntrackedOrigin](
-                unsafe_from_address=Int(filename.unsafe_ptr())
-            )
+            from_utf8=Span(unsafe_ptr=name_bytes.unsafe_ptr(), length=len(name_bytes))
         )
         var result = Value.object()
         result.set("stored_name", Value(stored))
