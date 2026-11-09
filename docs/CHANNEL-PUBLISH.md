@@ -1,6 +1,6 @@
 # Publish Mojara to the hosted Conda channel
 
-Mojara 1.2.6 is publicly available as separate [Linux x86-64 and ARM64 packages on GitHub](https://github.com/mojara-framework/mojara/releases/tag/v1.2.6). The independently hosted channel at https://mojara.kasua.ng/conda/ must also contain the new files and updated indexes before applications can install 1.2.6 by package name.
+Mojara 1.2.6 is publicly available as separate [Linux x86-64 and ARM64 packages on GitHub](https://github.com/mojara-framework/mojara/releases/tag/v1.2.6). The independently hosted channel at https://mojara.kasua.ng/conda/ now contains both architecture packages and their indexes. This page documents how to safely update the channel in future releases.
 
 The channel contains earlier Linux x86-64 releases. **Preserve those packages**; never replace the whole channel directory with an archive containing only the newest release. Publishing requires authorized access to the actual channel host or storage backend, not another VPS.
 
@@ -40,6 +40,6 @@ mojara version
 mojara doctor
 ~~~
 
-Verify actual installation on each architecture before changing the primary README installation commands from direct GitHub Release assets to channel installation. Keep GitHub downloads as a fallback.
+The primary README uses the hosted Conda channel for installation. Keep GitHub downloads as a fallback.
 
 The publication is tracked in [issue #12](https://github.com/mojara-framework/mojara/issues/12); remaining ABI/provenance work is tracked in [issue #9](https://github.com/mojara-framework/mojara/issues/9).

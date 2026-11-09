@@ -16,7 +16,7 @@
 - [ ] Complete the native ABI/provenance audit and account for remaining system-runtime overlinking warnings.
 - [ ] Compile the framework and all native bridges on Apple Silicon and run integration tests.
 - [x] Publish and freshly install the Linux ARM64 GitHub Release package.
-- [ ] Update the custom Conda channel for Linux ARM64 and verify its indexed installer.
+- [x] Publish Mojara 1.2.6 to the custom Conda channel for Linux x86-64 and ARM64.
 - [ ] Compile and publish a verified macOS ARM64 package.
 - [x] Add checksum-verified Linux multi-platform release automation.
 - [ ] Add cryptographic build provenance and independent upstream source pinning.
