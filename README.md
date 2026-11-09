@@ -12,14 +12,25 @@ Mojara is an open-source, Mojo-first web framework for routing, HTTP APIs, templ
 
 ## Install
 
-**Supported release: Linux x86-64 and Windows through WSL2.** Developers install Mojara globally, not by cloning this source repository or creating a Pixi workspace for every application.
+**Official Linux x86-64 and ARM64 packages:** [Mojara 1.2.6 release](https://github.com/mojara-framework/mojara/releases/tag/v1.2.6). Install using Pixi and the package matching your CPU. You do not need to clone this repository.
+
+### Linux ARM64
 
 ```bash
-pixi global install "mojara==1.2.5" \
-  -c https://mojara.kasua.ng/conda/ \
-  -c https://conda.modular.com/max/ \
-  -c conda-forge
+curl -fLO https://github.com/mojara-framework/mojara/releases/download/v1.2.6/mojara-1.2.6-he8cfe8b_0.conda
+pixi global install --path ./mojara-1.2.6-he8cfe8b_0.conda \
+  -c https://conda.modular.com/max/ -c conda-forge
 ```
+
+### Linux x86-64 (including Windows WSL2)
+
+```bash
+curl -fLO https://github.com/mojara-framework/mojara/releases/download/v1.2.6/mojara-1.2.6-hb0f4dca_0.conda
+pixi global install --path ./mojara-1.2.6-hb0f4dca_0.conda \
+  -c https://conda.modular.com/max/ -c conda-forge
+```
+
+The [SHA256SUMS](https://github.com/mojara-framework/mojara/releases/download/v1.2.6/SHA256SUMS) file provides checksums for both binaries. The separately hosted `mojara.kasua.ng` Conda channel is not yet updated with the ARM64 package, so install it using the GitHub Release until that channel is indexed.
 
 Then use Mojara anywhere:
 
@@ -48,9 +59,9 @@ See [Architecture](docs/ARCHITECTURE.md) for component boundaries, [verified sou
 
 | Target | Current state |
 | --- | --- |
-| Linux x86-64 | **Supported**, Mojara 1.2.5 |
+| Linux x86-64 | **GitHub Release available**, native package and clean-host tests passed |
 | Windows 10/11 with WSL2 Ubuntu | **Supported** via Linux x86-64 |
-| Linux ARM64 | **CI-qualified candidate (unpublished):** native build, HTTP, signed sessions, uploads, WebSockets, concurrent traffic, PostgreSQL/MariaDB and clean-runner package installation pass; not yet a public release |
+| Linux ARM64 | **GitHub Release available**, native package and clean-host tests passed; separate Conda channel publication pending |
 | macOS Apple Silicon | Experimental: CI target exists, full framework not certified |
 | Windows native | Not yet available; requires native Mojo compiler/runtime and Windows adapters |
 
@@ -65,12 +76,12 @@ source/
   native/                First-party C bridges
 tests/native/             Executable native regression tests
 scripts/                  Source-development build/test commands
-packaging/conda/          Conda recipe from the 1.2.5 release
+packaging/conda/          Source-native multi-architecture Conda release recipe
 docs/                     Tutorials, complete Mojara API reference and release process
 .github/workflows/        Platform matrix and native regression CI
 ```
 
-**Source build note:** The first-party code is checked in from the published Mojara v1.2.5 SDK. A fully independent rebuild still needs pinned, source-buildable third-party dependencies (Flare, JSON and others), the transaction-pool extension and architecture-specific packaging. We track these as explicit release gates rather than presenting a CLI-only build as the full framework.
+**Source build note:** The complete first-party Mojo library, CLI and native C bridge code are in this repository. Third-party Mojo modules are currently recovered from a checksum-pinned source bundle; independently pinned upstream revisions and complete extension provenance remain release-hardening work.
 
 ## Development and community
 
