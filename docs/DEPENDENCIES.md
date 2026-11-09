@@ -1,6 +1,6 @@
 # Dependencies and reproducible builds
 
-Mojara v1.2.5 includes a first-party Mojo facade, native C bridges and dependencies in the published prebuilt SDK.
+Mojara contains a first-party Mojo framework, native C bridges and a Mojo CLI built for each supported platform. Four external Mojo module source trees are pinned to upstream Git revisions and verified by SHA-256.
 
 | Dependency | Purpose | Reproducibility requirement |
 | --- | --- | --- |
