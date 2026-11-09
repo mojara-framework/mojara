@@ -5,6 +5,7 @@ on:
     paths:
       - 'source/**'
       - 'scripts/ci/**'
+      - 'tests/integration/**'
       - 'scripts/build-cli.sh'
       - 'pixi.toml'
       - '.github/workflows/full-linux-integration.yml'
@@ -92,6 +93,8 @@ jobs:
           MOJARA_CI_MYSQL_HOST: "127.0.0.1"
           MOJARA_CI_MYSQL_PASSWORD: "mojara_ci"
         run: pixi run bash scripts/ci/test-databases.sh
+      - name: Verify signed sessions, uploads, WebSockets and concurrent traffic
+        run: pixi run bash scripts/ci/test-http-features.sh
       - name: Preserve diagnostic logs
         if: always()
         uses: actions/upload-artifact@v4
@@ -100,4 +103,5 @@ jobs:
           path: |
             build/full-integration/server.log
             build/full-integration/health.json
+            build/full-integration/http-features/server.log
           if-no-files-found: ignore
