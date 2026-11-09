@@ -6,10 +6,6 @@ Mojara is an open-source, Mojo-first web framework for routing, HTTP APIs, templ
 
 [Documentation](https://mojara.kasua.ng/docs/) · [Complete Mojara API reference](docs/API-REFERENCE.md) · [Installation](https://mojara.kasua.ng/docs/install.html) · [CLI guide](https://mojara.kasua.ng/docs/cli.html) · [Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md)
 
-[![Native bridge regressions](https://github.com/mojara-framework/mojara/actions/workflows/native-bridge-regressions.yml/badge.svg)](https://github.com/mojara-framework/mojara/actions/workflows/native-bridge-regressions.yml)
-[![Cross-platform CLI checks](https://github.com/mojara-framework/mojara/actions/workflows/mojara-cross-platform.yml/badge.svg)](https://github.com/mojara-framework/mojara/actions/workflows/mojara-cross-platform.yml)
-[![Full Linux integration](https://github.com/mojara-framework/mojara/actions/workflows/full-linux-integration.yml/badge.svg)](https://github.com/mojara-framework/mojara/actions/workflows/full-linux-integration.yml)
-
 ## Install
 
 **Official Linux x86-64 and ARM64 packages:** [Mojara 1.2.6 release](https://github.com/mojara-framework/mojara/releases/tag/v1.2.6). Install using Pixi and the package matching your CPU. You do not need to clone this repository.
@@ -86,7 +82,5 @@ docs/                     Tutorials, complete Mojara API reference and release p
 ## Development and community
 
 Start with [Contributing](CONTRIBUTING.md), [Support](SUPPORT.md), and the [Roadmap](docs/ROADMAP.md). Report reproducible problems through [Issues](https://github.com/mojara-framework/mojara/issues). For vulnerabilities, follow [Security](SECURITY.md).
-
-Before resetting Windows/WSL2, follow the [safe WSL backup and Mojara reinstall procedure](docs/WSL-RESET.md).
 
 Released under the [MIT License](LICENSE). Third-party components retain their own licenses; see [third-party notices](docs/THIRD_PARTY_LICENSES.md).
