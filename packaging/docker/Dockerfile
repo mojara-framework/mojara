@@ -7,14 +7,13 @@ RUN apt-get update \
        bash ca-certificates curl \
     && rm -rf /var/lib/apt/lists/*
 
-RUN useradd --create-home --uid 1000 --shell /bin/bash mojara \
-    && mkdir -p /workspace \
-    && chown mojara:mojara /workspace
+RUN mkdir -p /workspace \
+    && chown ubuntu:ubuntu /workspace
 
-USER mojara
-ENV HOME=/home/mojara \
-    PIXI_HOME=/home/mojara/.pixi \
-    PATH=/home/mojara/.pixi/bin:$PATH \
+USER ubuntu
+ENV HOME=/home/ubuntu \
+    PIXI_HOME=/home/ubuntu/.pixi \
+    PATH=/home/ubuntu/.pixi/bin:$PATH \
     MOJARA_HOST=0.0.0.0 \
     MOJARA_PORT=8000
 
