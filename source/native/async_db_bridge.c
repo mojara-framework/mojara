@@ -416,7 +416,7 @@ uint64_t mj_asyncdb_submit(mj_async_pool *p,const char *sql,
     int unique=0;
     for (int attempt=0;attempt<8 && !unique;attempt++) {
         uint64_t candidate=0;
-        if(mj_secure_random(&candidate,sizeof(candidate),0)!=(ssize_t)sizeof(candidate))
+        if(mj_secure_random(&candidate,sizeof(candidate))!=(ssize_t)sizeof(candidate))
             break;
         candidate &= UINT64_C(0x7fffffffffffffff);
         if(!candidate)continue;

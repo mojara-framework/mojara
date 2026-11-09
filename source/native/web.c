@@ -153,7 +153,7 @@ int mj_web_store_multipart(const char *directory, const char *content_type,
     if (fstat(d, &dir_stat) || dir_stat.st_uid != geteuid() ||
         (dir_stat.st_mode & 0077) != 0) { close(d); return -3; }
     unsigned char random_bytes[16];
-    if (mj_secure_random(random_bytes, sizeof(random_bytes), 0) != sizeof(random_bytes)) {
+    if (mj_secure_random(random_bytes, sizeof(random_bytes)) != sizeof(random_bytes)) {
         close(d); return -3;
     }
     const char hex[] = "0123456789abcdef";

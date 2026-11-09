@@ -234,7 +234,7 @@ static int generated_file(int d, char name[48]) {
     static const char hex[] = "0123456789abcdef";
     for (int tries = 0; tries < 5; ++tries) {
         unsigned char random[16];
-        if (mj_secure_random(random, sizeof(random), 0) != (ssize_t)sizeof(random)) return -1;
+        if (mj_secure_random(random, sizeof(random)) != (ssize_t)sizeof(random)) return -1;
         memcpy(name, "upload-", 7);
         for (int i = 0; i < 16; ++i) {
             name[7 + 2*i] = hex[random[i] >> 4];
