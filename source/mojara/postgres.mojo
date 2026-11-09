@@ -3,6 +3,7 @@
 PgConnection executes developer-controlled SQL with positional parameters.
 PgRows stores detached text and NULL results after native result cleanup."""
 
+from .platform import library_name
 from std.ffi import OwnedDLHandle, c_int
 
 
@@ -59,7 +60,7 @@ struct PgConnection(Movable):
         self._handle = 0
         if conninfo.byte_length() == 0:
             raise Error("PostgreSQL connection string is missing")
-        var lib = OwnedDLHandle("libpq.so.5")
+        var lib = OwnedDLHandle(library_name("libpq.so.5", "libpq.5.dylib"))
         var connect = lib.get_function[Int]("PQconnectdb")
         var dsn = conninfo.copy()
         var connection = connect(dsn.as_c_string_span())
@@ -83,7 +84,7 @@ struct PgConnection(Movable):
     def __deinit__(deinit self):
         if self._handle != 0:
             try:
-                var lib = OwnedDLHandle("libpq.so.5")
+                var lib = OwnedDLHandle(library_name("libpq.so.5", "libpq.5.dylib"))
                 var finish = lib.get_function[NoneType]("PQfinish")
                 finish(self._handle)
             except:
@@ -102,7 +103,7 @@ struct PgConnection(Movable):
             raise Error("SQL statement is empty or too large")
         if len(params) > 256:
             raise Error("Too many PostgreSQL parameters")
-        var lib = OwnedDLHandle("libpq.so.5")
+        var lib = OwnedDLHandle(library_name("libpq.so.5", "libpq.5.dylib"))
         var query_owned = sql.copy()
         var result_ptr: Int
         if len(params) == 0:

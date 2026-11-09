@@ -4,6 +4,7 @@ App registers handlers and middleware, and Response constructs HTTP output.
 Listener settings come from validated runtime configuration. Public HTTP,
 session, and template interfaces are available from the Mojara package."""
 
+from .platform import library_name
 from std.pathlib import Path
 from std.os import getenv
 from std.ffi import OwnedDLHandle, c_int
@@ -216,7 +217,7 @@ struct _Lifecycle(Copyable, Handler):
         # Measures application dispatch time, not socket accept/transport time.
         if not self.metrics_enabled:
             return self._serve_unmeasured(req)
-        var lib = OwnedDLHandle("libmojara_metrics.so")
+        var lib = OwnedDLHandle(library_name("libmojara_metrics.so", "libmojara_metrics.dylib"))
         var begin = lib.get_function[Int]("mj_metrics_start")
         var finish = lib.get_function[NoneType]("mj_metrics_finish")
         var started = begin()

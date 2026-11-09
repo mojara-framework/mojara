@@ -3,6 +3,7 @@
 Hashes and token digests are computed by the native cryptography backend.
 Never expose raw credentials or token material in application logs."""
 
+from .platform import library_name
 from std.ffi import OwnedDLHandle, c_int, c_size_t, c_ulong_long
 
 
@@ -18,7 +19,7 @@ def _hex(bytes: List[UInt8]) raises -> String:
 
 def ensure_crypto() raises:
     """Check that the required native cryptography backend is available."""
-    var sodium = OwnedDLHandle("libsodium.so.23")
+    var sodium = OwnedDLHandle(library_name("libsodium.so.23", "libsodium.23.dylib"))
     var init = sodium.get_function[c_int]("sodium_init")
     if init() < 0:
         raise Error("libsodium initialization failed")
@@ -35,7 +36,7 @@ def hash_password(password: String) raises -> String:
     for i in range(password.byte_length()):
         if password.as_bytes()[i] == 0:
             raise Error("Password cannot contain a NUL byte")
-    var sodium = OwnedDLHandle("libsodium.so.23")
+    var sodium = OwnedDLHandle(library_name("libsodium.so.23", "libsodium.23.dylib"))
     var init = sodium.get_function[c_int]("sodium_init")
     if init() < 0:
         raise Error("libsodium initialization failed")
@@ -65,7 +66,7 @@ def verify_password(password: String, encoded_hash: String) raises -> Bool:
     """Verify a password without exposing the password hash to users."""
     if password.byte_length() > 1024 or encoded_hash.byte_length() == 0:
         return False
-    var sodium = OwnedDLHandle("libsodium.so.23")
+    var sodium = OwnedDLHandle(library_name("libsodium.so.23", "libsodium.23.dylib"))
     var init = sodium.get_function[c_int]("sodium_init")
     if init() < 0:
         raise Error("libsodium initialization failed")
@@ -85,7 +86,7 @@ def verify_password(password: String, encoded_hash: String) raises -> Bool:
 
 def new_token() raises -> String:
     """Generate a 256-bit cryptographically random, lowercase hex token."""
-    var sodium = OwnedDLHandle("libsodium.so.23")
+    var sodium = OwnedDLHandle(library_name("libsodium.so.23", "libsodium.23.dylib"))
     var init = sodium.get_function[c_int]("sodium_init")
     if init() < 0:
         raise Error("libsodium initialization failed")
@@ -99,7 +100,7 @@ def new_token() raises -> String:
 
 def token_digest(token: String) raises -> String:
     """SHA-256 digest for database token lookup; raw token is never stored."""
-    var sodium = OwnedDLHandle("libsodium.so.23")
+    var sodium = OwnedDLHandle(library_name("libsodium.so.23", "libsodium.23.dylib"))
     var init = sodium.get_function[c_int]("sodium_init")
     if init() < 0:
         raise Error("libsodium initialization failed")

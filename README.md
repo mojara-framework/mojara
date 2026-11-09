@@ -77,7 +77,6 @@ docs/                     Tutorials, complete Mojara API reference and release p
 .github/workflows/        Platform matrix and native regression CI
 ```
 
-**Source build note:** The complete first-party Mojo library, CLI and native C bridge code are in this repository. Third-party Mojo modules are currently recovered from a checksum-pinned source bundle; independently pinned upstream revisions and complete extension provenance remain release-hardening work.
 
 ## Development and community
 
