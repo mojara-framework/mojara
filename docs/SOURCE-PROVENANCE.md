@@ -1,22 +1,22 @@
-# Mojara v1.2.5 source provenance
+# Source provenance and reproducible builds
 
-The first-party implementation was recovered from the **published official Mojara v1.2.5 Linux x86-64 Conda package**, not reconstructed from examples.
+Mojara builds its first-party framework directly from the checked-in repository source:
 
-Published source archive:
-- Package: [mojara-1.2.5-hb0f4dca_0.conda](https://mojara.kasua.ng/conda/linux-64/mojara-1.2.5-hb0f4dca_0.conda)
-- SHA-256: `838bb8d3404a8f481e2ec18236a539599dd66d151ae6a758675e6b4f1b893e02`
-- Source path within package: `opt/mojara/share/mojara/source/`
+- `source/mojara/`: Mojo framework and public API modules.
+- `source/cli/`: native Mojo command-line tool.
+- `source/native/`: native C/C++ bridge implementation.
+- `tests/native/`: native regression checks.
 
-Inventory:
-- 26 first-party Mojo framework modules in `source/mojara/`.
-- 8 first-party native C bridge implementations in `source/native/`.
-- 1 first-party CLI source in `source/cli/`.
+## Independently pinned upstream Mojo dependencies
 
-A clean GitHub clone was compared against the released SDK on Linux. All **35** published source paths were present. The framework modules and native C files matched the release, except for normalized final newline differences. The CLI source intentionally differs because this repository contains portability preparation (host CPU selection, macOS dynamic library suffix and Linux-only systemd checks).
+The external Flare, JSON, Morph and SQLite Mojo modules are retrieved directly from their original public repositories under [ehsanmok](https://github.com/ehsanmok). The exact Git commits and source-archive SHA-256 digests are recorded in `source/upstream/UPSTREAM.lock`.
 
-The included C regression tests were recovered from a prior v1.0.0 SDK source test bundle and were **executed successfully against the v1.2.5 native implementations** on Linux x86-64. They are additional QA assets, not claimed to have been present in the v1.2.5 source folder.
+`scripts/ci/bootstrap-source.sh` downloads and validates those archives without reading a previous Mojara binary or source distribution. `source/upstream/source-sha256.txt` selects an explicitly verified set of 347 upstream files. `source/upstream/compat.patch` records 22 Mojara-specific compatibility adjustments, including native loader changes. After patch application, every file is SHA-256 verified.
 
-## Limits
+The upstream MIT license files are copied into the built SDK's `share/doc/mojara/licenses` directory. Native framework modules, CLI and C/C++ libraries are compiled afresh for the target architecture.
 
-The v1.2.5 SDK bundles third-party precompiled Mojo modules, dynamic native connectors and a transaction-pool extension for which **not all source build inputs appear in that SDK source directory**. This GitHub repository does not yet provide a fully self-contained, dependency-locked source build. See [issue #3](https://github.com/mojara-framework/mojara/issues/3) for the remaining work.
+## Release verification
 
+Linux x86-64 and Linux ARM64 release qualification compiles source, builds native Conda packages, inspects ELF dependencies and relocatable loader paths, then installs and runs Mojara on independent runners. macOS Apple Silicon qualification separately compiles the Mach-O native SDK and checks a clean-installed web application.
+
+The binary ABI audit is implemented in `scripts/ci/audit-release-abi.sh`. It verifies ELF target architecture, shared-library providers declared in Conda metadata, loader paths, and the Linux GLIBC compatibility baseline. The audit supplements, rather than silences, packaging toolchain diagnostics.
