@@ -7,41 +7,7 @@ WORK="$ROOT/build/full-integration"
 SDK="$WORK/sdk"
 STAGE="$WORK/package-payload/mojara"
 OUT="$WORK/ci-packages"
-test -s "$SDK/lib/mojo/mojara.mojoc"
-test -x "$SDK/bin/mojara"
-mkdir -p "$STAGE" "$OUT"
-cp -a "$SDK/." "$STAGE/"
-# All native libraries live under opt/mojara/lib while their Conda runtime
-# dependencies live under prefix/lib (or prefix/lib/mariadb for Connector/C).
-# Use relative RUNPATHs so a package
-# remains relocatable across Pixi and Conda environment directories.
-command -v patchelf >/dev/null || { echo 'patchelf is required for packaging' >&2; exit 2; }
-while IFS= read -r -d '' native; do
-  patchelf --set-rpath '$ORIGIN:$ORIGIN/../../../lib:$ORIGIN/../../../lib/mariadb' "$native"
-done < <(find "$STAGE/lib" -type f -name '*.so*' -print0)
-# Preserve the Mojo compiler runtime lookup metadata on the native CLI.
-# Rattler relocates that executable during package construction; overriding
-# its RUNPATH here breaks libKGENCompilerRTShared.so resolution.
-# An absolute path to the CI compiler or build directory must not escape
-# into a distributable artifact.
-if command -v readelf >/dev/null; then
-  while IFS= read -r -d '' native; do
-    dynamic="$(readelf -d "$native" | grep -E 'RPATH|RUNPATH' || true)"
-    case "$dynamic" in
-      *"/home/runner/"*|*"/tmp/mojara"*|*"/.pixi/envs/default/"*)
-        echo "Non-relocatable native RUNPATH: $native: $dynamic" >&2
-        exit 1
-        ;;
-    esac
-  done < <(find "$STAGE/lib" -type f -name '*.so*' -print0)
-fi
-cp "$ROOT/LICENSE" "$STAGE/LICENSE"
-mkdir -p "$STAGE/share/doc/mojara/licenses"
-cp "$ROOT/docs/THIRD_PARTY_LICENSES.md" "$STAGE/share/doc/mojara/licenses/THIRD_PARTY_LICENSES.md"
-printf 'CI candidate only; not a production release. Native extension and full release qualification pending.\n' > "$STAGE/CI-NOT-A-RELEASE.txt"
-
-# The published binary SDK is NOT used. The source-only archive was checked
-# by SHA256 in bootstrap-source.sh and this entire SDK compiled on the runner.
+bash "$ROOT/scripts/ci/prepare-package-payload.sh" ci
 pixi global install rattler-build -c conda-forge
 rattler-build build -r "$ROOT/packaging/ci/recipe.yaml" \
   -c https://conda.modular.com/max/ -c conda-forge \

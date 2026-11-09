@@ -1,0 +1,184 @@
+name: Publish native Mojara Linux packages
+
+on:
+  pull_request:
+    paths:
+      - 'source/**'
+      - 'packaging/**'
+      - 'scripts/**'
+      - 'pixi.toml'
+      - '.github/workflows/release-linux.yml'
+  workflow_run:
+    workflows: [Native Conda package fresh-install qualification]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mojara-native-release-1.2.6
+  cancel-in-progress: false
+
+jobs:
+  package:
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    name: Build production Conda / ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 65
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            target: linux-64
+          - runner: ubuntu-24.04-arm
+            target: linux-aarch64
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - name: Install build requirements
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            build-essential pkg-config curl ca-certificates zstd patchelf
+      - uses: prefix-dev/setup-pixi@v0.9.3
+        with:
+          cache: false
+      - name: Recover SHA256-verified dependency sources
+        run: bash scripts/ci/bootstrap-source.sh
+      - name: Compile native source for release CPU
+        run: pixi run bash scripts/ci/build-source-sdk.sh
+      - name: Build release Conda package
+        run: pixi run bash scripts/ci/build-release-package.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mojara-release-${{ matrix.target }}
+          path: build/full-integration/release-packages/**/*.conda
+          if-no-files-found: error
+          retention-days: 14
+
+  verify:
+    name: Verify production package on clean host / ${{ matrix.target }}
+    needs: package
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 40
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: mojara
+          POSTGRES_PASSWORD: mojara_ci
+          POSTGRES_DB: mojara
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U mojara -d mojara"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+      mariadb:
+        image: mariadb:11
+        env:
+          MARIADB_DATABASE: mojara
+          MARIADB_USER: mojara
+          MARIADB_PASSWORD: mojara_ci
+          MARIADB_ROOT_PASSWORD: mojara_root_ci
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "healthcheck.sh --connect --innodb_initialized"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            target: linux-64
+          - runner: ubuntu-24.04-arm
+            target: linux-aarch64
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - uses: prefix-dev/setup-pixi@v0.9.3
+        with:
+          cache: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: mojara-release-${{ matrix.target }}
+          path: build/fresh-package-download
+      - name: Validate package, SQL drivers and generated app on separate runner
+        env:
+          MOJARA_PACKAGE_GLOB: "mojara-1.2.6-*.conda"
+          MOJARA_CI_PG_DSN: "host=127.0.0.1 port=5432 user=mojara password=mojara_ci dbname=mojara"
+          MOJARA_CI_MYSQL_HOST: "127.0.0.1"
+          MOJARA_CI_MYSQL_PASSWORD: "mojara_ci"
+        run: bash scripts/ci/fresh-runner-install.sh
+
+  publish:
+    if: github.event_name != 'pull_request'
+    name: Publish verified packages to GitHub Releases
+    needs: verify
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_COMMIT: ${{ github.event.workflow_run.head_sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_COMMIT }}
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: mojara-release-*
+          path: release-packages
+      - name: Validate asset inventory and checksums
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mapfile -d '' ASSETS < <(find release-packages -type f -name 'mojara-1.2.6-*.conda' -print0)
+          test "${#ASSETS[@]}" -eq 2
+          test "$(printf '%s\n' "${ASSETS[@]##*/}" | sort -u | wc -l)" -eq 2
+          : > SHA256SUMS
+          for asset in "${ASSETS[@]}"; do
+            printf '%s  %s\n' "$(sha256sum "$asset" | cut -d ' ' -f1)" "$(basename "$asset")" >> SHA256SUMS
+          done
+          cat SHA256SUMS
+      - name: Publish release for qualified main commit only
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          MAIN_HEAD="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq '.object.sha')"
+          test "$MAIN_HEAD" = "$RELEASE_COMMIT" || {
+            echo "Main moved during release qualification; refusing stale release" >&2
+            exit 1
+          }
+          if gh release view v1.2.6 >/dev/null 2>&1; then
+            echo "v1.2.6 already published; refusing automatic overwrite" >&2
+            exit 1
+          fi
+          cat > RELEASE_NOTES.md <<'NOTES'
+          ## Mojara 1.2.6
+
+          Native Mojo web framework for Linux x86-64 and Linux ARM64.
+          Both packages were compiled from first-party source, installed
+          on independent runners, and tested with live PostgreSQL/MariaDB
+          prepared SQL and a generated HTTP application.
+
+          Download the matching architecture .conda package and install:
+          `pixi global install --path /path/to/mojara-1.2.6-*.conda -c https://conda.modular.com/max/ -c conda-forge`
+
+          Verify checksums against SHA256SUMS. This GitHub Release is public;
+          publishing the separate mojara.kasua.ng Conda channel index remains
+          a separate deployment step.
+          NOTES
+          mapfile -d '' ASSETS < <(find release-packages -type f -name 'mojara-1.2.6-*.conda' -print0)
+          gh release create v1.2.6 "${ASSETS[@]}" SHA256SUMS \
+            --target "$RELEASE_COMMIT" --title "Mojara 1.2.6" \
+            --notes-file RELEASE_NOTES.md --latest

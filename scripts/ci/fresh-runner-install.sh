@@ -4,7 +4,8 @@
 set -Eeuo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 DOWN="$ROOT/build/fresh-package-download"
-PKG="$(find "$DOWN" -name 'mojara-ci-smoke-*.conda' -type f -print -quit)"
+PACKAGE_GLOB="${MOJARA_PACKAGE_GLOB:-mojara-ci-smoke-*.conda}"
+PKG="$(find "$DOWN" -type f -name "$PACKAGE_GLOB" -print -quit)"
 test -n "$PKG" || { echo 'Missing candidate package artifact' >&2; exit 2; }
 WORK="$ROOT/build/fresh-package-verify"
 mkdir -p "$WORK"
@@ -17,6 +18,7 @@ test -x "$CLI"
 "$CLI" version
 "$CLI" doctor
 bash "$ROOT/scripts/ci/verify-installed-links.sh" "$PIXI_HOME"
+bash "$ROOT/scripts/ci/test-installed-databases.sh" "$PIXI_HOME"
 file "$PIXI_HOME"/envs/*/opt/mojara/bin/mojara
 cd "$WORK"
 "$CLI" new isolated-smoke

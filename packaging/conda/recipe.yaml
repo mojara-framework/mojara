@@ -1,12 +1,12 @@
 context:
-  version: "1.2.5"
+  version: "1.2.6"
 
 package:
   name: mojara
   version: ${{ version }}
 
 source:
-  path: ../payload
+  path: ../../build/full-integration/package-payload
   use_gitignore: false
 
 build:
