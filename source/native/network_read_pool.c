@@ -1,5 +1,5 @@
 /* Mojara v0.13.0: opt-in, bounded PostgreSQL/MySQL read-only connection pool.
- * Linux x86_64 ABI; libpq and the existing Mojara MySQL bridge are loaded
+ * POSIX 64-bit ABI; libpq and the existing Mojara MySQL bridge are loaded
  * dynamically, so this bridge needs no database-specific development headers.
  *
  * Each SELECT leases one connection for a synchronous query. Pool close must
@@ -86,7 +86,12 @@ static int sym(void *lib, const char *name, void *destination, size_t dest_size)
 #define MY_SYM(api, field, name) (sym((api)->lib,(name),&(api)->field,sizeof((api)->field)))
 
 static int load_pg(pg_functions *p) {
-    p->lib = dlopen("libpq.so.5", RTLD_NOW | RTLD_LOCAL);
+    p->lib = dlopen(
+#if defined(__APPLE__)
+        "libpq.5.dylib",
+#else
+        "libpq.so.5",
+#endif RTLD_NOW | RTLD_LOCAL);
     if (!p->lib) return 0;
     return PG_SYM(p,connectdb,"PQconnectdb") && PG_SYM(p,status,"PQstatus") &&
         PG_SYM(p,finish,"PQfinish") && PG_SYM(p,exec,"PQexec") &&
@@ -97,7 +102,12 @@ static int load_pg(pg_functions *p) {
         PG_SYM(p,setClientEncoding,"PQsetClientEncoding");
 }
 static int load_my(mysql_functions *m) {
-    m->lib = dlopen("libmojara_mysql.so", RTLD_NOW | RTLD_LOCAL);
+    m->lib = dlopen(
+#if defined(__APPLE__)
+        "libmojara_mysql.dylib",
+#else
+        "libmojara_mysql.so",
+#endif RTLD_NOW | RTLD_LOCAL);
     if (!m->lib) return 0;
     return MY_SYM(m,open,"mj_mysql_open") && MY_SYM(m,close,"mj_mysql_close") &&
         MY_SYM(m,read_only,"mj_mysql_enable_readonly") && MY_SYM(m,query,"mj_mysql_query_flat") && MY_SYM(m,free_result,"mj_mysql_free") &&
@@ -107,7 +117,11 @@ static int load_my(mysql_functions *m) {
 
 static struct timespec deadline_after(int ms) {
     struct timespec until = {0, 0};
+#if defined(__APPLE__)
+    clock_gettime(CLOCK_REALTIME, &until);
+#else
     clock_gettime(CLOCK_MONOTONIC, &until);
+#endif
     until.tv_sec += ms / 1000;
     until.tv_nsec += (long)(ms % 1000) * 1000000L;
     if (until.tv_nsec >= 1000000000L) { until.tv_nsec -= 1000000000L; ++until.tv_sec; }
@@ -173,8 +187,13 @@ void *mj_np_open(int driver, const unsigned char *config, size_t config_len,
     if (pthread_mutex_init(&p->mutex,NULL)) { free(p); failure(MJ_NP_INVALID); return NULL; }
     pthread_condattr_t attr;
     if (pthread_condattr_init(&attr)) { pthread_mutex_destroy(&p->mutex); free(p); failure(MJ_NP_INVALID); return NULL; }
+#if defined(__APPLE__)
+    /* Darwin pthread condition variables use the wall clock. */
+    int rc=pthread_cond_init(&p->available,&attr);
+#else
     int rc=pthread_condattr_setclock(&attr,CLOCK_MONOTONIC);
     if (!rc) rc=pthread_cond_init(&p->available,&attr);
+#endif
     pthread_condattr_destroy(&attr);
     if (rc) { pthread_mutex_destroy(&p->mutex); free(p); failure(MJ_NP_INVALID); return NULL; }
     p->driver=driver; p->capacity=capacity; p->wait_ms=wait_ms;

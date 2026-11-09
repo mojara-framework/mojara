@@ -2,7 +2,11 @@
 #define _POSIX_C_SOURCE 200809L
 #include <sys/types.h>
 #include <sys/stat.h>
+#if defined(__APPLE__)
+#include <stdlib.h>
+#else
 #include <sys/random.h>
+#endif
 #include <fcntl.h>
 #include <stdint.h>
 #include <errno.h>
@@ -11,6 +15,16 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <ctype.h>
+
+/* Use the platform's secure random generator for file/session identifiers. */
+static ssize_t mj_secure_random(void *buffer, size_t size) {
+#if defined(__APPLE__)
+    arc4random_buf(buffer, size);
+    return (ssize_t)size;
+#else
+    return getrandom(buffer, size, 0);
+#endif
+}
 
 /* Small binary-safe filesystem boundary for Mojara. The application supplies
  * trusted directories; client input never becomes a filesystem path. */
@@ -139,7 +153,7 @@ int mj_web_store_multipart(const char *directory, const char *content_type,
     if (fstat(d, &dir_stat) || dir_stat.st_uid != geteuid() ||
         (dir_stat.st_mode & 0077) != 0) { close(d); return -3; }
     unsigned char random_bytes[16];
-    if (getrandom(random_bytes, sizeof(random_bytes), 0) != sizeof(random_bytes)) {
+    if (mj_secure_random(random_bytes, sizeof(random_bytes), 0) != sizeof(random_bytes)) {
         close(d); return -3;
     }
     const char hex[] = "0123456789abcdef";

@@ -8,10 +8,24 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+#if defined(__APPLE__)
+#include <stdlib.h>
+#else
 #include <sys/random.h>
+#endif
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+
+/* Use the platform's secure random generator for file/session identifiers. */
+static ssize_t mj_secure_random(void *buffer, size_t size) {
+#if defined(__APPLE__)
+    arc4random_buf(buffer, size);
+    return (ssize_t)size;
+#else
+    return getrandom(buffer, size, 0);
+#endif
+}
 
 /* Binary-safe, all-or-nothing multipart/form-data upload for Mojara.
  * Callers own the bounded input and output buffers. No client-provided name
@@ -220,7 +234,7 @@ static int generated_file(int d, char name[48]) {
     static const char hex[] = "0123456789abcdef";
     for (int tries = 0; tries < 5; ++tries) {
         unsigned char random[16];
-        if (getrandom(random, sizeof(random), 0) != (ssize_t)sizeof(random)) return -1;
+        if (mj_secure_random(random, sizeof(random), 0) != (ssize_t)sizeof(random)) return -1;
         memcpy(name, "upload-", 7);
         for (int i = 0; i < 16; ++i) {
             name[7 + 2*i] = hex[random[i] >> 4];
