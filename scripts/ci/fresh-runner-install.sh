@@ -17,6 +17,7 @@ test -x "$CLI"
 "$CLI" version
 "$CLI" doctor
 bash "$ROOT/scripts/ci/verify-installed-links.sh" "$PIXI_HOME"
+bash "$ROOT/scripts/ci/test-installed-databases.sh" "$PIXI_HOME"
 file "$PIXI_HOME"/envs/*/opt/mojara/bin/mojara
 cd "$WORK"
 "$CLI" new isolated-smoke
