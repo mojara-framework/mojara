@@ -86,12 +86,11 @@ static int sym(void *lib, const char *name, void *destination, size_t dest_size)
 #define MY_SYM(api, field, name) (sym((api)->lib,(name),&(api)->field,sizeof((api)->field)))
 
 static int load_pg(pg_functions *p) {
-    p->lib = dlopen(
 #if defined(__APPLE__)
-        "libpq.5.dylib",
+    p->lib = dlopen("libpq.5.dylib", RTLD_NOW | RTLD_LOCAL);
 #else
-        "libpq.so.5",
-#endif RTLD_NOW | RTLD_LOCAL);
+    p->lib = dlopen("libpq.so.5", RTLD_NOW | RTLD_LOCAL);
+#endif
     if (!p->lib) return 0;
     return PG_SYM(p,connectdb,"PQconnectdb") && PG_SYM(p,status,"PQstatus") &&
         PG_SYM(p,finish,"PQfinish") && PG_SYM(p,exec,"PQexec") &&
@@ -102,12 +101,11 @@ static int load_pg(pg_functions *p) {
         PG_SYM(p,setClientEncoding,"PQsetClientEncoding");
 }
 static int load_my(mysql_functions *m) {
-    m->lib = dlopen(
 #if defined(__APPLE__)
-        "libmojara_mysql.dylib",
+    m->lib = dlopen("libmojara_mysql.dylib", RTLD_NOW | RTLD_LOCAL);
 #else
-        "libmojara_mysql.so",
-#endif RTLD_NOW | RTLD_LOCAL);
+    m->lib = dlopen("libmojara_mysql.so", RTLD_NOW | RTLD_LOCAL);
+#endif
     if (!m->lib) return 0;
     return MY_SYM(m,open,"mj_mysql_open") && MY_SYM(m,close,"mj_mysql_close") &&
         MY_SYM(m,read_only,"mj_mysql_enable_readonly") && MY_SYM(m,query,"mj_mysql_query_flat") && MY_SYM(m,free_result,"mj_mysql_free") &&
