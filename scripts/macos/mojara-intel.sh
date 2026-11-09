@@ -19,11 +19,16 @@ if [[ -t 0 && -t 1 ]]; then
   tty=(-t)
 fi
 
+port_args=()
+case "${1:-}" in
+  dev|start) port_args=(-p "127.0.0.1:${HOST_PORT}:8000") ;;
+esac
+
 exec docker run --rm --init -i "${tty[@]}" \
   --platform linux/amd64 \
   -v "$PWD:/workspace" \
   -w /workspace \
   -e MOJARA_HOST=0.0.0.0 \
   -e MOJARA_PORT=8000 \
-  -p "127.0.0.1:${HOST_PORT}:8000" \
+  "${port_args[@]}" \
   "$IMAGE" "$@"
