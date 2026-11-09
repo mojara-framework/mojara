@@ -11,6 +11,7 @@ This is the minimum gate for publishing any new Mojara package. Passing the CLI-
 - [ ] Test MySQL/PostgreSQL connections, prepared statements, transactions and connection-pool shutdown.
 - [ ] Test concurrent traffic, graceful shutdown, reload and local CLI workflows.
 - [ ] Create a Conda package with only required platform binaries, correct ELF/Mach-O architecture and dependency metadata.
+- [ ] Verify relative ELF loader paths, zero unresolved installed dependencies and resolve package overlinking warnings.
 - [ ] Verify a **fresh global installation** from the public channel on the actual target OS and architecture.
 - [ ] Verify the documentation and package release notes match the actual supported targets.
 - [ ] Publish the checksums/artifacts, then update the channel index.
@@ -18,4 +19,4 @@ This is the minimum gate for publishing any new Mojara package. Passing the CLI-
 
 ## Current release
 
-Mojara **1.2.5** has passed the Linux x86-64 global installation and application health smoke test. ARM64 and macOS have not passed the full release checklist. Native Windows is unavailable.
+Mojara **1.2.5** is the published Linux x86-64 package. Independently rebuilt CI package candidates for Linux x86-64 and ARM64 have passed the framework integration and fresh-runner install suites. These candidates are unpublished and do not satisfy the complete release checklist. macOS and native Windows releases are not qualified.

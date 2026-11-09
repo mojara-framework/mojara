@@ -11,6 +11,30 @@ test -s "$SDK/lib/mojo/mojara.mojoc"
 test -x "$SDK/bin/mojara"
 mkdir -p "$STAGE" "$OUT"
 cp -a "$SDK/." "$STAGE/"
+# All native libraries live under opt/mojara/lib while their Conda runtime
+# dependencies live under prefix/lib (or prefix/lib/mariadb for Connector/C).
+# Use relative RUNPATHs so a package
+# remains relocatable across Pixi and Conda environment directories.
+command -v patchelf >/dev/null || { echo 'patchelf is required for packaging' >&2; exit 2; }
+while IFS= read -r -d '' native; do
+  patchelf --set-rpath '$ORIGIN:$ORIGIN/../../../lib:$ORIGIN/../../../lib/mariadb' "$native"
+done < <(find "$STAGE/lib" -type f -name '*.so*' -print0)
+# Preserve the Mojo compiler runtime lookup metadata on the native CLI.
+# Rattler relocates that executable during package construction; overriding
+# its RUNPATH here breaks libKGENCompilerRTShared.so resolution.
+# An absolute path to the CI compiler or build directory must not escape
+# into a distributable artifact.
+if command -v readelf >/dev/null; then
+  while IFS= read -r -d '' native; do
+    dynamic="$(readelf -d "$native" | grep -E 'RPATH|RUNPATH' || true)"
+    case "$dynamic" in
+      *"/home/runner/"*|*"/tmp/mojara"*|*"/.pixi/envs/default/"*)
+        echo "Non-relocatable native RUNPATH: $native: $dynamic" >&2
+        exit 1
+        ;;
+    esac
+  done < <(find "$STAGE/lib" -type f -name '*.so*' -print0)
+fi
 cp "$ROOT/LICENSE" "$STAGE/LICENSE"
 mkdir -p "$STAGE/share/doc/mojara/licenses"
 cp "$ROOT/docs/THIRD_PARTY_LICENSES.md" "$STAGE/share/doc/mojara/licenses/THIRD_PARTY_LICENSES.md"
@@ -37,6 +61,7 @@ CLI="$FRESH/bin/mojara"
 test -x "$CLI"
 "$CLI" version
 "$CLI" doctor
+bash "$ROOT/scripts/ci/verify-installed-links.sh" "$FRESH"
 echo "Fresh package contents:"
 file "$FRESH"/envs/*/opt/mojara/bin/mojara
 TEST="$WORK/fresh-app"

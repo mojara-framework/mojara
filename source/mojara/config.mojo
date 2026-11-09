@@ -7,6 +7,8 @@ from std.os import getenv
 
 
 struct DatabaseSettings(Copyable):
+    """Validated database connection and logging configuration shared by Mojara's SQL clients."""
+
     var driver: String
     var sqlite_path: String
     var postgres_dsn: String

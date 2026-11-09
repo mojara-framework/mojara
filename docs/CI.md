@@ -6,7 +6,9 @@ Mojara keeps portable CLI checks, native C regressions and platform experiments 
 
 1. **Mojara Linux portability CI** compiles the Mojo CLI and confirms that `mojara new` creates a normal application directory on Linux x86-64 and ARM64.
 2. **Native bridge regressions** compiles and runs C tests for static files, safe multipart uploads and concurrent telemetry on both Linux architectures.
-3. **Full Linux framework integration** checksum-verifies the published v1.2.5 dependency-source archive, rebuilds the platform-native C/C++ libraries, precompiles first-party Mojo source, builds and runs a generated HTTP app and checks live PostgreSQL/MariaDB prepared queries and transaction controls on real Linux x86-64 and ARM64 runners.
+3. **Linux connection pool and shutdown regressions** exercises bounded leases, concurrency, timeouts, reuse and shutdown on x86-64 and ARM64.
+4. **Full Linux framework integration** verifies the pinned third-party source bundle, builds native libraries and the Mojo framework on both CPUs, then tests HTTP routes, static files, real PostgreSQL and MariaDB transactions, signed sessions, form parsing, authenticated multipart uploads, WebSocket protocol handling, concurrent HTTP requests and bounded server shutdown.
+5. **Native Conda package fresh-install qualification** creates separate unpublished packages for x86-64 and ARM64, verifies `mojara doctor`, compiles and serves a newly generated application, and repeats installation on clean runners without C development headers. It also checks installed ELF dependency resolution.
 
 Both run on relevant pushes and pull requests. They can also be run from the Actions tab without a local installation.
 
@@ -14,9 +16,11 @@ Both run on relevant pushes and pull requests. They can also be run from the Act
 
 **macOS Apple Silicon validation (experimental)** runs only when requested manually. GitHub may queue the job until an Apple Silicon runner becomes available. A job in a queued state has not tested the project and must not be recorded as a compilation failure.
 
-## Full application compatibility
+## Release qualification gaps
 
-Not yet covered by the full integration workflow: HTTP WebSocket upgrades, end-to-end sessions/authentication and HTTP uploads, stress/load tests, graceful shutdown, full transaction-pool extension build, ARM64 Conda packaging and fresh installation, and macOS native SDK tests. The dependency bootstrap uses SHA-256-verified source from the published Linux x86-64 SDK, not independently pinned upstream repositories; native libraries and the application are rebuilt on each runner. These remaining gates must pass before publishing ARM64/macOS packages.
+The Linux application tests and isolated package tests cover both CPU architectures. The source bootstrap still relies on the SHA-256-pinned third-party module bundle rather than independently pinned upstream source revisions. The complete transaction-pool extension, deeper SSE/load/deployment coverage, package relocation diagnostics and macOS native SDK validation remain separate release gates. Passing CI candidate tests is not the same as publishing or certifying a stable ARM64 package.
+
+For the source-level declarations available to application developers, see the [Mojara API reference](API-REFERENCE.md).
 
 ## Publishing
 

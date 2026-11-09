@@ -9,6 +9,8 @@ from .orm import quoted_identifier
 
 
 struct PortableTable:
+    """Portable accessor for an id/name table across supported SQL database drivers."""
+
     var name: String
 
     def __init__(out self, name: String) raises:
