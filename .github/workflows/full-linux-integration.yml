@@ -2,6 +2,8 @@ name: Full Linux framework integration
 
 on:
   push:
+    branches:
+      - main
     paths:
       - 'source/**'
       - 'scripts/ci/**'
