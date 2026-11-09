@@ -29,6 +29,8 @@ def _safe_filename(filename: String) -> Bool:
 
 
 struct Templates(Copyable):
+    """HTML template loader restricted to a configured trusted directory."""
+
     var directory: String
 
     def __init__(out self, directory: String = "templates") raises:

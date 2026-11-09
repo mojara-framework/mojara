@@ -24,6 +24,8 @@ def _validate_mysql_config_text(value: String) raises:
 
 
 struct MysqlConnection(Movable):
+    """Owned MySQL connection backed by the native client bridge."""
+
     var _handle: Int
     var _bridge: OwnedDLHandle
 

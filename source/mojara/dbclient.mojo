@@ -17,6 +17,8 @@ from .network_pool import NetworkReadPool
 
 
 struct DbClient(Movable):
+    """Owned database connection that exposes portable operations for SQLite, PostgreSQL and MySQL."""
+
     var driver: String
     var _sqlite: Optional[Database]
     var _postgres: Optional[PgConnection]

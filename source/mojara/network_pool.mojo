@@ -8,6 +8,8 @@ from .config import DatabaseSettings
 
 @fieldwise_init
 struct NetworkPoolStats(Copyable):
+    """Snapshot of read-pool capacity, contention, queries and error counters."""
+
     var capacity: Int
     var in_use: Int
     var waiting: Int
@@ -20,6 +22,8 @@ struct NetworkPoolStats(Copyable):
 
 
 struct NetworkReadPool(Movable):
+    """Bounded PostgreSQL or MySQL read pool with connection leases and wait timeouts."""
+
     var _handle: Int
     var driver: String
 

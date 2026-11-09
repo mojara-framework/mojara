@@ -8,7 +8,7 @@ This reference covers the first-party Mojo declarations for databases, runtime s
 
 ### `Column`
 
-Public Mojo type.
+Portable SQL column definition with key, nullability, type and foreign-reference constraints.
 
 **`Column.__init__`**
 
@@ -45,7 +45,7 @@ Generate driver-specific SQL for this validated column definition.
 
 ### `Table`
 
-Public Mojo type.
+Validated table definition that plans SQL schema changes for the selected database.
 
 **`Table.__init__`**
 
@@ -164,7 +164,7 @@ Only additive operations; never drop columns or change existing types.
 
 ### `Schema`
 
-Public Mojo type.
+Ordered collection of table definitions for planning and applying schema changes.
 
 **`Schema.__init__`**
 
@@ -232,7 +232,7 @@ Apply a one-statement .sql file; values must use bound parameters elsewhere.
 
 ### `MysqlConnection`
 
-Public Mojo type.
+Owned MySQL connection backed by the native client bridge.
 
 **`MysqlConnection.__init__`**
 
@@ -282,11 +282,11 @@ def transaction(self, action: Int) raises:
 
 ### `NetworkPoolStats`
 
-Public Mojo type.
+Snapshot of read-pool capacity, contention, queries and error counters.
 
 ### `NetworkReadPool`
 
-Public Mojo type.
+Bounded PostgreSQL or MySQL read pool with connection leases and wait timeouts.
 
 **`NetworkReadPool.__init__`**
 
@@ -511,7 +511,7 @@ Update a validated text column for one record.
 
 ### `PortableTable`
 
-Public Mojo type.
+Portable accessor for an id/name table across supported SQL database drivers.
 
 **`PortableTable.__init__`**
 
@@ -866,7 +866,7 @@ Atomic snapshot under the native pool mutex, valid until close.
 
 ### `SqliteReadPool`
 
-Public Mojo type.
+Bounded, file-backed SQLite read pool with timed connection acquisition.
 
 **`SqliteReadPool.__init__`**
 
@@ -1177,7 +1177,7 @@ Close the pool after every lease has returned.
 
 ### `Templates`
 
-Public Mojo type.
+HTML template loader restricted to a configured trusted directory.
 
 **`Templates.__init__`**
 

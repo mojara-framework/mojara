@@ -28,6 +28,8 @@ struct SqlitePoolStats(Copyable):
 
 
 struct SqliteReadPool(Movable):
+    """Bounded, file-backed SQLite read pool with timed connection acquisition."""
+
     var _handle: Int
 
     def __init__(

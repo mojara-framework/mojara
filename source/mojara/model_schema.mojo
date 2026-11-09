@@ -10,6 +10,8 @@ from std.pathlib import Path
 
 
 struct Column(Copyable):
+    """Portable SQL column definition with key, nullability, type and foreign-reference constraints."""
+
     var name: String
     var kind: String
     var width: Int
@@ -143,6 +145,8 @@ struct Column(Copyable):
 
 
 struct Table(Copyable):
+    """Validated table definition that plans SQL schema changes for the selected database."""
+
     var name: String
     var columns: List[Column]
 
@@ -313,6 +317,8 @@ struct Table(Copyable):
 
 
 struct Schema:
+    """Ordered collection of table definitions for planning and applying schema changes."""
+
     var tables: List[Table]
 
     def __init__(out self):

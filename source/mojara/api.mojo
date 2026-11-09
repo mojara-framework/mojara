@@ -195,6 +195,8 @@ struct _HtmlHandler(Copyable, Handler):
 
 
 struct Operation(Copyable):
+    """Metadata for a registered endpoint, including its route, validation schema and authentication policy."""
+
     var method: String
     var path: String
     var summary: String

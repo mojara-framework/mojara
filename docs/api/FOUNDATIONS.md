@@ -371,7 +371,7 @@ Return the interactive API documentation.
 
 ### `Operation`
 
-Public Mojo type.
+Metadata for a registered endpoint, including its route, validation schema and authentication policy.
 
 **`Operation.__init__`**
 
@@ -695,7 +695,7 @@ Create an async DB worker pool. Keep a copy in each registered handler.
 
 ### `DatabaseSettings`
 
-Public Mojo type.
+Validated database connection and logging configuration shared by Mojara's SQL clients.
 
 **`DatabaseSettings.__init__`**
 
@@ -785,7 +785,7 @@ Open SQLite with foreign keys and a small lock contention timeout.
 
 ### `DbClient`
 
-Public Mojo type.
+Owned database connection that exposes portable operations for SQLite, PostgreSQL and MySQL.
 
 **`DbClient.__init__`**
 
