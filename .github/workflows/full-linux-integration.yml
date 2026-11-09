@@ -29,6 +29,34 @@ jobs:
     name: Native SDK and HTTP server / ${{ matrix.target }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 55
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: mojara
+          POSTGRES_PASSWORD: mojara_ci
+          POSTGRES_DB: mojara
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U mojara -d mojara"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+      mariadb:
+        image: mariadb:11
+        env:
+          MARIADB_DATABASE: mojara
+          MARIADB_USER: mojara
+          MARIADB_PASSWORD: mojara_ci
+          MARIADB_ROOT_PASSWORD: mojara_root_ci
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "healthcheck.sh --connect --innodb_initialized"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
     strategy:
       fail-fast: false
       matrix:
@@ -58,6 +86,12 @@ jobs:
         run: pixi run bash scripts/ci/build-source-sdk.sh
       - name: Build and run a real Mojo web application
         run: pixi run bash scripts/ci/test-http-app.sh
+      - name: Test real PostgreSQL and MariaDB prepared queries and transactions
+        env:
+          MOJARA_CI_PG_DSN: "host=127.0.0.1 port=5432 user=mojara password=mojara_ci dbname=mojara"
+          MOJARA_CI_MYSQL_HOST: "127.0.0.1"
+          MOJARA_CI_MYSQL_PASSWORD: "mojara_ci"
+        run: pixi run bash scripts/ci/test-databases.sh
       - name: Preserve diagnostic logs
         if: always()
         uses: actions/upload-artifact@v4
