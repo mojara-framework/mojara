@@ -16,6 +16,7 @@ build:
 
 requirements:
   host:
+    - mojo ==1.2.0
     - libpq
     - mariadb-connector-c
     - openssl >=3
