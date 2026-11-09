@@ -1,0 +1,14 @@
+* text=auto
+*.mojo text eol=lf
+*.c text eol=lf
+*.h text eol=lf
+*.sh text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.png binary
+*.jpg binary
+*.zip binary
+*.conda binary
+*.so binary
+*.dylib binary
+*.exe binary
