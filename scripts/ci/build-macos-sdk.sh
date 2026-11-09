@@ -19,7 +19,7 @@ for dep in libpq libmariadb sqlite3; do
 done
 CC="${CC:-clang}"
 CXX="${CXX:-clang++}"
-COMMON=(-O2 -fPIC -dynamiclib -pthread "-I$CONDA_PREFIX/include" "-L$CONDA_PREFIX/lib" "-Wl,-rpath,@loader_path" "-Wl,-rpath,$CONDA_PREFIX/lib")
+COMMON=(-O2 -fPIC -dynamiclib -pthread "-I$CONDA_PREFIX/include" "-L$CONDA_PREFIX/lib" "-Wl,-rpath,@loader_path" "-Wl,-rpath,@loader_path/../../../lib" "-Wl,-rpath,$CONDA_PREFIX/lib")
 NATIVE="$ROOT/source/native"
 FFI="$SRC/flare/http/ffi"
 TLS="$SRC/flare/tls/ffi"
