@@ -48,17 +48,23 @@ build_cpp libsimdjson_wrapper.dylib "$JSON/simdjson_wrapper.cpp" -lsimdjson
 # the build's working copy, leaving the pinned upstream archive unchanged.
 python3 - "$SRC" <<'PY'
 from pathlib import Path
+import re
 import sys
+
 root = Path(sys.argv[1])
 changed = 0
 for module in ("flare", "json"):
-    for f in (root / module).rglob("*.mojo"):
-        text = f.read_text()
-        patched = text.replace(".so", ".dylib")
-        if patched != text:
-            f.write_text(patched)
+    for source in (root / module).rglob("*.mojo"):
+        content = source.read_text()
+        # Match the ELF library extension, not identifiers such as ".socket"
+        # or ".sort_keys". Versioned library names are handled separately.
+        patched = re.sub(r"\\.so(?![A-Za-z0-9_.])", ".dylib", content)
+        if patched != content:
+            source.write_text(patched)
             changed += 1
-print("Adjusted macOS upstream dynamic-library lookup modules:", changed)
+        if "dylibcket" in patched or "dylibrt_keys" in patched:
+            raise SystemExit(f"Invalid macOS FFI source patch: {source}")
+print("Adjusted native-library suffixes in macOS upstream modules:", changed)
 PY
 
 export MOJARA_HOME="$SDK"
