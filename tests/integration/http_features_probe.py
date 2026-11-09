@@ -150,6 +150,43 @@ def functional_probe(base, host, port, work):
     check(code == 413, f"oversized upload not rejected: {code}")
     print("PASS: multipart authenticated upload, persistence, permissions, oversize rejection")
 
+    def multipart_part(filename, content, media="text/plain"):
+        return (
+            f"--{boundary}\\r\\n"
+            f'Content-Disposition: form-data; name="files"; filename="{filename}"\\r\\n'
+            f"Content-Type: {media}\\r\\n\\r\\n"
+        ).encode() + content + b"\\r\\n"
+
+    alpha, beta = b"alpha-Mojara", b"beta-Mojara"
+    multi = (multipart_part("first.txt", alpha)
+             + multipart_part("second.txt", beta)
+             + f"--{boundary}--\\r\\n".encode())
+    multi_headers = {"Content-Type": "multipart/form-data; boundary=" + boundary}
+    code, _, _ = http(base, "/uploads", method="POST", data=multi, headers=multi_headers)
+    check(code == 403, "unauthorized multi-upload was accepted")
+    multi_headers["X-Mojara-Upload-Token"] = token
+    code, _, body = http(base, "/uploads", method="POST", data=multi, headers=multi_headers)
+    check(code == 201, f"valid multi-upload status: {code} ({body[:180]!r})")
+    batch = json.loads(body)
+    check(batch["count"] == 2 and len(batch["files"]) == 2, "multi-upload count mismatch")
+    for record, expected in zip(batch["files"], (alpha, beta)):
+        check(record["bytes"] == len(expected), "multi-upload file size mismatch")
+        check(record["content_type"] == "text/plain", "multi-upload MIME mismatch")
+        candidate = work / "private_uploads" / record["stored_name"]
+        check(candidate.is_file() and candidate.read_bytes() == expected,
+              f"multi-upload stored content differs: {record}")
+        check((candidate.stat().st_mode & 0o777) == 0o600, "multi-upload permissions not private")
+    present = {x.name for x in (work / "private_uploads").glob("upload-*")}
+    bad = (multipart_part("first.txt", alpha)
+           + multipart_part("second.txt", beta)
+           + multipart_part("third.txt", b"too-many")
+           + f"--{boundary}--\\r\\n".encode())
+    code, _, _ = http(base, "/uploads", method="POST", data=bad, headers=multi_headers)
+    check(code == 413, f"multi-upload exceeding file count was not rejected: {code}")
+    check(present == {x.name for x in (work / "private_uploads").glob("upload-*")},
+          "failed atomic multi-upload left partial files")
+    print("PASS: authenticated atomic multi-file upload, metadata, permissions, file-count policy")
+
     websocket_probe(host, port)
 
 
