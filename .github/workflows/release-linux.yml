@@ -1,6 +1,13 @@
 name: Publish native Mojara Linux packages
 
 on:
+  pull_request:
+    paths:
+      - 'source/**'
+      - 'packaging/**'
+      - 'scripts/**'
+      - 'pixi.toml'
+      - '.github/workflows/release-linux.yml'
   workflow_run:
     workflows: [Native Conda package fresh-install qualification]
     types: [completed]
@@ -16,7 +23,7 @@ concurrency:
 
 jobs:
   package:
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     name: Build production Conda / ${{ matrix.target }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 65
@@ -114,6 +121,7 @@ jobs:
         run: bash scripts/ci/fresh-runner-install.sh
 
   publish:
+    if: github.event_name != 'pull_request'
     name: Publish verified packages to GitHub Releases
     needs: verify
     runs-on: ubuntu-24.04
