@@ -133,6 +133,15 @@ def functional_probe(base, host, port, work):
     record = json.loads(body)
     path = work / "private_uploads" / record["stored_name"]
     check(record["bytes"] == len(payload), "upload size mismatch")
+    if not path.is_file() or path.read_bytes() != payload:
+        print("UPLOAD_DEBUG", {
+            "record": record, "expected_path": str(path),
+            "exists": path.exists(),
+            "files": [str(p) for p in work.rglob("upload-*")],
+            "actual_bytes": repr(path.read_bytes()) if path.is_file() else None,
+            "expected_bytes": repr(payload),
+            "cwd": str(Path.cwd()),
+        }, flush=True)
     check(path.is_file() and path.read_bytes() == payload, "saved upload bytes differ")
     check((path.stat().st_mode & 0o777) == 0o600, "upload permissions not 0600")
     oversize = b"X" * 1200
