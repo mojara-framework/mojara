@@ -55,5 +55,5 @@ for existing Mojara applications.
 app.get_handler("/static/bootstrap/:name", StaticFile("static/bootstrap"))
 ```
 
-`StaticFile` defaults to 2 MiB per file; override `max_bytes` only
-when necessary.
+`StaticFile("static/bootstrap")` requires only the asset directory. The
+4 MiB per-file limit is automatic; override `max_bytes` only when necessary.
