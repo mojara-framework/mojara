@@ -32,4 +32,3 @@ int main(void) {
   return 0;
 }
 
-[executed on device: vmi3166522 (9dedaf3d-f67d-45f3-879f-08d518d2f7ef)
