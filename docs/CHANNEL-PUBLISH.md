@@ -1,6 +1,6 @@
-# Mojara 1.2.8 Conda channel
+# Mojara 1.2.9 Conda channel
 
-The initial public release is [Mojara 1.2.8](https://github.com/mojara-framework/mojara/releases/tag/v1.2.8). Its native Linux x86-64, Linux ARM64 and Apple Silicon packages are served at https://mojara.kasua.ng/conda/.
+The current release is [Mojara 1.2.9](https://github.com/mojara-framework/mojara/releases/tag/v1.2.9). Its native Linux x86-64, Linux ARM64 and Apple Silicon packages are served at https://mojara.kasua.ng/conda/.
 
 ## Publish release packages
 
@@ -21,7 +21,7 @@ The script verifies all package SHA-256 checksums against the GitHub release bef
 ## Install Mojara
 
 ```bash
-pixi global install 'mojara==1.2.8' -c https://mojara.kasua.ng/conda/ -c https://conda.modular.com/max/ -c conda-forge
+pixi global install 'mojara==1.2.9' -c https://mojara.kasua.ng/conda/ -c https://conda.modular.com/max/ -c conda-forge
 ```
 
 ```bash

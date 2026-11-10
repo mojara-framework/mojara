@@ -19,4 +19,4 @@ This is the minimum gate for publishing any new Mojara package. Passing the CLI-
 
 ## Current release
 
-Mojara **1.2.8** provides native Linux x86-64, Linux ARM64 and macOS Apple Silicon packages. Each platform has an independently built and installed production Conda package. Outstanding hardening includes independent upstream source pinning, ABI diagnostics and native Windows support.
+Mojara **1.2.9** provides native Linux x86-64, Linux ARM64 and macOS Apple Silicon packages. Each platform has an independently built and installed production Conda package. Outstanding hardening includes independent upstream source pinning, ABI diagnostics and native Windows support.

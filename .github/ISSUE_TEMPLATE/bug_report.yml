@@ -10,7 +10,7 @@ body:
     id: version
     attributes:
       label: Mojara version
-      placeholder: "1.2.8"
+      placeholder: "1.2.9"
     validations:
       required: true
   - type: input

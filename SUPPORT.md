@@ -2,7 +2,7 @@
 
 Use the [Mojara documentation](https://mojara.kasua.ng/docs/) for installation, tutorials, API reference, databases and deployment.
 
-For bugs, [open an issue](https://github.com/mojara-framework/mojara/issues/new/choose) with Mojara 1.2.8, Mojo compiler version, platform, CPU architecture, a minimal reproduction and sanitized logs.
+For bugs, [open an issue](https://github.com/mojara-framework/mojara/issues/new/choose) with Mojara 1.2.9, Mojo compiler version, platform, CPU architecture, a minimal reproduction and sanitized logs.
 
 Use the feature request template for improvements. See [SECURITY.md](SECURITY.md) to report vulnerabilities privately.
 

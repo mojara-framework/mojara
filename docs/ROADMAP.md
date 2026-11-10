@@ -1,6 +1,6 @@
 # Roadmap
 
-Mojara 1.2.8 is the public starting release.
+Mojara 1.2.9 is the public starting release.
 
 ## Community
 
