@@ -18,7 +18,16 @@ bash scripts/release/publish-conda-channel.sh /absolute/path/to/conda
 
 The script verifies all package SHA-256 checksums against the GitHub release before updating the channel indexes.
 
-## Install Mojara
+## Install Mojara with Pixi
+
+```bash
+pixi global install 'mojara==1.2.9' \
+  -c https://mojara.kasua.ng/conda/ \
+  -c https://conda.modular.com/max/ \
+  -c conda-forge
+```
+
+Alternatively, the verified release installer sets up Pixi automatically:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/mojara-framework/mojara/main/scripts/install.sh | bash
