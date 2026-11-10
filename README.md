@@ -28,7 +28,16 @@ curl -fsSL https://pixi.sh/install.sh | bash
 export PATH="$HOME/.pixi/bin:$PATH"
 ```
 
-**Step 3 - Install Mojara.**
+**Step 3 - Install Mojara with Pixi.**
+
+```bash
+pixi global install 'mojara==1.2.9' \
+  -c https://mojara.kasua.ng/conda/ \
+  -c https://conda.modular.com/max/ \
+  -c conda-forge
+```
+
+**Alternative - One-command release installer.** If you prefer, use the official installer instead of Steps 1-3. It installs Pixi if necessary, verifies the downloaded release package's SHA-256 checksum, and installs Mojara:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/mojara-framework/mojara/main/scripts/install.sh | bash
@@ -177,11 +186,22 @@ curl -fsSL https://pixi.sh/install.sh | bash
 export PATH="$HOME/.pixi/bin:$PATH"
 ```
 
-**Step 6 - Install Mojara and its development watcher.**
+**Step 6 - Install Mojara with Pixi.**
+
+```bash
+pixi global install 'mojara==1.2.9' \
+  -c https://mojara.kasua.ng/conda/ \
+  -c https://conda.modular.com/max/ \
+  -c conda-forge
+```
+
+**Alternative:** Use the verified release installer instead of the Pixi command above:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/mojara-framework/mojara/main/scripts/install.sh | bash
 ```
+
+Install the development watcher:
 
 ```bash
 pixi global install 'watchexec>=2.7,<3' -c conda-forge
@@ -442,14 +462,6 @@ All built files are in `build/full-integration/sdk/`. [Detailed source build gui
 | macOS Intel through Docker (Linux x86-64) | **Supported** |
 | macOS Intel through Lima (Linux VM) | Linux VM installation available |
 | Native Windows executables | Not yet available |
-
-## Official Mojara branding
-
-The Mojara logo and icon are available directly from this repository:
-
-- [Mojara logo](assets/mojara-logo.webp)
-- [Mojara icon](assets/mojara-icon.webp)
-- [Scalable Mojara icon](assets/mojara-icon.svg)
 
 ## Features
 
