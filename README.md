@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/mojara-logo.webp" alt="Official Mojara logo" width="420">
+  <img src="assets/Mojara Gradient Ribbon Logo (1).png" alt="Official Mojara logo" width="420">
 </p>
 
 # Mojara 🔥
