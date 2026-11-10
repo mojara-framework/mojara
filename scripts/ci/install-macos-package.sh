@@ -4,7 +4,7 @@ set -Eeuo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 [[ "$(uname -sm)" == "Darwin arm64" ]] || exit 2
 DOWN="$ROOT/build/macos-package-download"
-PKG="$(find "$DOWN" -type f -name 'mojara-1.2.7-*.conda' -print -quit)"
+PKG="$(find "$DOWN" -type f -name 'mojara-1.2.8-*.conda' -print -quit)"
 test -s "$PKG"
 WORK="$ROOT/build/macos-fresh-install"
 mkdir -p "$WORK"

@@ -23,7 +23,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: mojara-native-release-1.2.7
+  group: mojara-native-release-1.2.8
   cancel-in-progress: false
 
 jobs:
@@ -119,7 +119,7 @@ jobs:
           path: build/fresh-package-download
       - name: Validate package, SQL drivers and generated app on separate runner
         env:
-          MOJARA_PACKAGE_GLOB: "mojara-1.2.7-*.conda"
+          MOJARA_PACKAGE_GLOB: "mojara-1.2.8-*.conda"
           MOJARA_CI_PG_DSN: "host=127.0.0.1 port=5432 user=mojara password=mojara_ci dbname=mojara"
           MOJARA_CI_MYSQL_HOST: "127.0.0.1"
           MOJARA_CI_MYSQL_PASSWORD: "mojara_ci"
@@ -147,7 +147,7 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
-          mapfile -d '' ASSETS < <(find release-packages -type f -name 'mojara-1.2.7-*.conda' -print0)
+          mapfile -d '' ASSETS < <(find release-packages -type f -name 'mojara-1.2.8-*.conda' -print0)
           test "${#ASSETS[@]}" -eq 2
           test "$(printf '%s\n' "${ASSETS[@]##*/}" | sort -u | wc -l)" -eq 2
           : > SHA256SUMS
@@ -161,8 +161,8 @@ jobs:
           set -Eeuo pipefail
           # Release workflow updates must not make an existing version fail.
           # Never modify a previously published package or move its tag.
-          if gh release view v1.2.7 >/dev/null 2>&1; then
-            echo "Mojara v1.2.7 already published; preserving its original source commit and assets"
+          if gh release view v1.2.8 >/dev/null 2>&1; then
+            echo "Mojara v1.2.8 already published; preserving its original source commit and assets"
             exit 0
           fi
           MAIN_HEAD="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq '.object.sha')"
@@ -171,21 +171,23 @@ jobs:
             exit 1
           }
           cat > RELEASE_NOTES.md <<'NOTES'
-          ## Mojara 1.2.7
+          ## Mojara 1.2.8
 
           Native Mojo web framework for Linux x86-64 and Linux ARM64.
+          Includes source-built native transaction pools and improved reload
+          behavior for template, stylesheet and JavaScript edits.
           Both packages were compiled from first-party source, installed
           on independent runners, and tested with live PostgreSQL/MariaDB
           prepared SQL and a generated HTTP application.
 
           Download the matching architecture .conda package and install:
-          `pixi global install --path /path/to/mojara-1.2.7-*.conda -c https://conda.modular.com/max/ -c conda-forge`
+          `pixi global install --path /path/to/mojara-1.2.8-*.conda -c https://conda.modular.com/max/ -c conda-forge`
 
           Verify checksums against SHA256SUMS. This GitHub Release is public;
           publishing the separate mojara.kasua.ng Conda channel index remains
           a separate deployment step.
           NOTES
-          mapfile -d '' ASSETS < <(find release-packages -type f -name 'mojara-1.2.7-*.conda' -print0)
-          gh release create v1.2.7 "${ASSETS[@]}" SHA256SUMS \
-            --target "$RELEASE_COMMIT" --title "Mojara 1.2.7" \
+          mapfile -d '' ASSETS < <(find release-packages -type f -name 'mojara-1.2.8-*.conda' -print0)
+          gh release create v1.2.8 "${ASSETS[@]}" SHA256SUMS \
+            --target "$RELEASE_COMMIT" --title "Mojara 1.2.8" \
             --notes-file RELEASE_NOTES.md --latest
