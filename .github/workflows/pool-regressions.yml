@@ -32,7 +32,7 @@ jobs:
           - runner: ubuntu-24.04-arm
             target: linux-aarch64
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install SQLite C headers
         run: sudo apt-get update -qq && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends build-essential libsqlite3-dev
       - name: Execute native pool concurrency and graceful shutdown tests

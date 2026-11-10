@@ -70,7 +70,7 @@ jobs:
             target: linux-aarch64
     steps:
       - name: Checkout full first-party source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Install native C/C++ development dependencies
         shell: bash
         run: |

@@ -38,7 +38,7 @@ jobs:
     runs-on: macos-26
     timeout-minutes: 65
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Confirm Apple Silicon host
         run: |
           test "$(uname -sm)" = "Darwin arm64"
@@ -109,7 +109,7 @@ jobs:
     runs-on: macos-26
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: prefix-dev/setup-pixi@v0.9.3
         with:
           cache: false
