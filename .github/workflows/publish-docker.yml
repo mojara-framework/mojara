@@ -1,0 +1,78 @@
+name: Publish Mojara Docker image
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packaging/docker/**'
+      - 'scripts/ci/test-docker-image.sh'
+      - '.github/workflows/publish-docker.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  DOCKER_VERSION: "1.2.8"
+  IMAGE: ghcr.io/mojara-framework/mojara
+
+jobs:
+  image:
+    name: Build and test Docker / ${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 65
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            arch: amd64
+          - runner: ubuntu-24.04-arm
+            arch: arm64
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build official runtime and development image
+        run: |
+          docker build --platform linux/${{ matrix.arch }} \
+            --build-arg "MOJARA_VERSION=$DOCKER_VERSION" \
+            -t "$IMAGE:$DOCKER_VERSION-${{ matrix.arch }}" \
+            -f packaging/docker/Dockerfile .
+      - name: Run real generated Mojo application in Docker
+        run: |
+          bash scripts/ci/test-docker-image.sh \
+            "$IMAGE:$DOCKER_VERSION-${{ matrix.arch }}" \
+            "linux/${{ matrix.arch }}"
+      - name: Authenticate with GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push verified architecture image
+        run: docker push "$IMAGE:$DOCKER_VERSION-${{ matrix.arch }}"
+
+  manifest:
+    name: Publish Docker multiarchitecture manifest
+    needs: image
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: docker/setup-buildx-action@v3
+      - name: Authenticate with GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish version and latest tags for both architectures
+        run: |
+          docker buildx imagetools create \
+            -t "$IMAGE:$DOCKER_VERSION" \
+            -t "$IMAGE:latest" \
+            "$IMAGE:$DOCKER_VERSION-amd64" \
+            "$IMAGE:$DOCKER_VERSION-arm64"
+      - name: Verify manifest architectures
+        run: |
+          docker buildx imagetools inspect "$IMAGE:$DOCKER_VERSION"
+          docker buildx imagetools inspect "$IMAGE:latest"

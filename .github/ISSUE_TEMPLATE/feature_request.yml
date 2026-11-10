@@ -1,0 +1,33 @@
+name: Feature request
+description: Propose an improvement to the framework
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem to solve
+      description: "What real-world developer problem does this solve?"
+    validations:
+      required: true
+  - type: textarea
+    id: approach
+    attributes:
+      label: Proposed API or behavior
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - HTTP / routing
+        - Templates / forms / uploads
+        - Database
+        - Security / authentication
+        - CLI / packaging
+        - Cross-platform
+        - Documentation
+        - Other
+    validations:
+      required: true

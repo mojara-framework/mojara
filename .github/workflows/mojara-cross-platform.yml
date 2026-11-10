@@ -1,0 +1,59 @@
+name: Mojara Linux portability CI
+
+on:
+  push:
+    paths:
+      - '.github/workflows/mojara-cross-platform.yml'
+      - 'pixi.toml'
+      - 'source/cli/**'
+      - 'scripts/build-cli.sh'
+      - 'scripts/verify-platform.sh'
+  pull_request:
+    paths:
+      - '.github/workflows/mojara-cross-platform.yml'
+      - 'pixi.toml'
+      - 'source/cli/**'
+      - 'scripts/build-cli.sh'
+      - 'scripts/verify-platform.sh'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mojara-linux-cli-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cli:
+    name: Native CLI and project generator / ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            target: linux-64
+          - runner: ubuntu-24.04-arm
+            target: linux-aarch64
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Pixi and Mojo 1.2.0
+        uses: prefix-dev/setup-pixi@v0.9.3
+        with:
+          cache: false
+      - name: Verify runner and compiler
+        run: pixi run bash scripts/verify-platform.sh
+      - name: Compile native Mojo CLI
+        run: pixi run bash scripts/build-cli.sh
+      - name: Test project creation without a project-level Pixi workspace
+        shell: bash
+        run: |
+          ./build/bin/mojara new hello-ci
+          test -f hello-ci/app.mojo
+          test -f hello-ci/mojara.project
+          test -f hello-ci/templates/index.html
+          test -f hello-ci/static/style.css
+          ! test -e hello-ci/pixi.toml
+          echo "Native CLI / project creation passed: ${{ matrix.target }}"

@@ -1,0 +1,13 @@
+# Security policy
+
+## Supported release
+
+| Version | Platforms | Maintenance |
+| --- | --- | --- |
+| Mojara 1.2.8 | Linux x86-64, Linux ARM64, macOS Apple Silicon, Windows via WSL2 and Intel Mac via Docker | Supported |
+
+## Reporting vulnerabilities
+
+Use the repository's Security tab and private vulnerability reporting whenever available. Do not publish credentials, sensitive exploit details or private user data in public issues.
+
+Include the version, OS, impact, sanitized reproduction and relevant logs. The maintainers will investigate and coordinate appropriate updates.

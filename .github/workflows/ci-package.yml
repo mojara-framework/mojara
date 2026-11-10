@@ -1,0 +1,147 @@
+name: Native Conda package fresh-install qualification
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'packaging/ci/**'
+      - 'scripts/ci/bootstrap-source.sh'
+      - 'scripts/ci/build-source-sdk.sh'
+      - 'scripts/ci/package-and-install.sh'
+      - 'scripts/ci/fresh-runner-install.sh'
+      - 'scripts/ci/verify-installed-links.sh'
+      - 'scripts/ci/prepare-package-payload.sh'
+      - 'scripts/ci/test-installed-databases.sh'
+      - 'packaging/conda/recipe.yaml'
+      - 'pixi.toml'
+      - '.github/workflows/ci-package.yml'
+  pull_request:
+    paths:
+      - 'packaging/ci/**'
+      - 'scripts/ci/bootstrap-source.sh'
+      - 'scripts/ci/build-source-sdk.sh'
+      - 'scripts/ci/package-and-install.sh'
+      - 'scripts/ci/fresh-runner-install.sh'
+      - 'scripts/ci/verify-installed-links.sh'
+      - 'scripts/ci/prepare-package-payload.sh'
+      - 'scripts/ci/test-installed-databases.sh'
+      - 'packaging/conda/recipe.yaml'
+      - 'pixi.toml'
+      - '.github/workflows/ci-package.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mojara-native-package-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci-package:
+    name: Build and fresh-install CI package / ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            target: linux-64
+          - runner: ubuntu-24.04-arm
+            target: linux-aarch64
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install native development dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            build-essential pkg-config curl ca-certificates zstd patchelf \
+            libssl-dev zlib1g-dev libdeflate-dev libbrotli-dev \
+            libsqlite3-dev libpq-dev libmariadb-dev libsodium-dev
+      - uses: prefix-dev/setup-pixi@v0.9.3
+        with:
+          cache: false
+      - name: Bootstrap checksum-verified source, no x86 native code
+        run: bash scripts/ci/bootstrap-source.sh
+      - name: Compile native SDK on host architecture
+        run: pixi run bash scripts/ci/build-source-sdk.sh
+      - name: Build CI-only Conda candidate and fresh Pixi global install
+        run: pixi run bash scripts/ci/package-and-install.sh
+      - name: Upload unpublished CI packages for inspection
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unpublished-native-package-${{ matrix.target }}
+          path: |
+            build/full-integration/ci-packages/**/*.conda
+            build/full-integration/fresh-install-server.log
+            build/full-integration/fresh-install-health.json
+          if-no-files-found: ignore
+
+  fresh-runner:
+    name: Fresh host install without C build dependencies / ${{ matrix.target }}
+    needs: ci-package
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: mojara
+          POSTGRES_PASSWORD: mojara_ci
+          POSTGRES_DB: mojara
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U mojara -d mojara"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+      mariadb:
+        image: mariadb:11
+        env:
+          MARIADB_DATABASE: mojara
+          MARIADB_USER: mojara
+          MARIADB_PASSWORD: mojara_ci
+          MARIADB_ROOT_PASSWORD: mojara_root_ci
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "healthcheck.sh --connect --innodb_initialized"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            target: linux-64
+          - runner: ubuntu-24.04-arm
+            target: linux-aarch64
+    steps:
+      - uses: actions/checkout@v4
+      - uses: prefix-dev/setup-pixi@v0.9.3
+        with:
+          cache: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: unpublished-native-package-${{ matrix.target }}
+          path: build/fresh-package-download
+      - name: Install candidate and test real packaged PostgreSQL/MariaDB drivers
+        env:
+          MOJARA_CI_PG_DSN: "host=127.0.0.1 port=5432 user=mojara password=mojara_ci dbname=mojara"
+          MOJARA_CI_MYSQL_HOST: "127.0.0.1"
+          MOJARA_CI_MYSQL_PASSWORD: "mojara_ci"
+        run: bash scripts/ci/fresh-runner-install.sh
+      - name: Upload fresh-runner diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fresh-runner-logs-${{ matrix.target }}
+          path: |
+            build/fresh-package-verify/isolated-server.log
+            build/fresh-package-verify/isolated-health.json
+          if-no-files-found: ignore

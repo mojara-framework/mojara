@@ -1,0 +1,47 @@
+name: Bug report
+description: Report a reproducible problem in Mojara
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: "For security vulnerabilities, use the private reporting instructions in SECURITY.md instead."
+  - type: input
+    id: version
+    attributes:
+      label: Mojara version
+      placeholder: "1.2.8"
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Operating system and architecture
+      placeholder: "Ubuntu 24.04 x86-64 / WSL2"
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Minimal reproduction
+      description: "Include sanitized code and the commands used."
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: "Remove API keys, database credentials, session cookies and other secrets."
+      render: shell

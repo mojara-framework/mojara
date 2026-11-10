@@ -1,0 +1,39 @@
+name: Linux connection pool and shutdown regressions
+
+on:
+  push:
+    paths:
+      - 'source/native/**'
+      - 'tests/native/**'
+      - 'scripts/test-pools.sh'
+      - '.github/workflows/pool-regressions.yml'
+  pull_request:
+    paths:
+      - 'source/native/**'
+      - 'tests/native/**'
+      - 'scripts/test-pools.sh'
+      - '.github/workflows/pool-regressions.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pools:
+    name: Pools, lease safety, shutdown / ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            target: linux-64
+          - runner: ubuntu-24.04-arm
+            target: linux-aarch64
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install SQLite C headers
+        run: sudo apt-get update -qq && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends build-essential libsqlite3-dev
+      - name: Execute native pool concurrency and graceful shutdown tests
+        run: bash scripts/test-pools.sh
