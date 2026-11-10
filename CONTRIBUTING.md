@@ -22,6 +22,11 @@ Explain **what changed**, **why**, **which platforms**, **which tests ran**, and
 
 The maintainers review PRs against the platform status and release checklist. CI must pass on the affected platforms before merging; every platform is tested separately.
 
+## Commit titles
+
+Keep commit subjects short, clear and imperative, ideally under 50 characters.
+Use titles such as `Fix forms`, `Add replies` or `Update docs`. Put implementation details and test results in the pull request description, not the commit subject.
+
 ## Reporting
 
 - Bugs and feature requests: [GitHub Issues](https://github.com/mojara-framework/mojara/issues).
