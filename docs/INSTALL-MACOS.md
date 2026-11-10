@@ -7,7 +7,7 @@ Mojara supports Apple Silicon natively and Intel Macs through Docker's Linux x86
 Install [Pixi](https://pixi.sh/latest/installation/), then run:
 
 ```bash
-pixi global install 'mojara==1.2.7' \
+pixi global install 'mojara==1.2.8' \
   -c https://mojara.kasua.ng/conda/ \
   -c https://conda.modular.com/max/ \
   -c conda-forge
@@ -24,7 +24,7 @@ Install [Docker Desktop for Mac with Intel chip](https://docs.docker.com/desktop
 Pull the official Mojara Docker image:
 
 ```bash
-docker pull --platform linux/amd64 ghcr.io/mojara-framework/mojara:1.2.7
+docker pull --platform linux/amd64 ghcr.io/mojara-framework/mojara:1.2.8
 ```
 
 The image includes Mojara, Mojo, the native linker and a development file watcher. You do not need to clone the repository. For local image builds, see the [Docker guide](DOCKER.md).
@@ -77,7 +77,7 @@ sudo apt install -y build-essential curl ca-certificates
 curl -fsSL https://pixi.sh/install.sh | bash
 export PATH="$HOME/.pixi/bin:$PATH"
 
-pixi global install 'mojara==1.2.7' \
+pixi global install 'mojara==1.2.8' \
   -c https://mojara.kasua.ng/conda/ \
   -c https://conda.modular.com/max/ \
   -c conda-forge
@@ -96,4 +96,4 @@ This method **does not use Docker**. The compiler still runs on Linux x86-64 ins
 
 ## Mojara release
 
-The [Mojara 1.2.7 release](https://github.com/mojara-framework/mojara/releases/tag/v1.2.7) provides native Conda packages for Linux x86-64, Linux ARM64 and Apple Silicon. Intel Macs run the Linux x86-64 package through Docker Desktop or the Lima Linux virtual machine described above.
+The [Mojara 1.2.8 release](https://github.com/mojara-framework/mojara/releases/tag/v1.2.8) provides native Conda packages for Linux x86-64, Linux ARM64 and Apple Silicon. Intel Macs run the Linux x86-64 package through Docker Desktop or the Lima Linux virtual machine described above.
