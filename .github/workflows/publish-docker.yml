@@ -14,7 +14,7 @@ permissions:
   packages: write
 
 env:
-  DOCKER_VERSION: "1.2.7"
+  DOCKER_VERSION: "1.2.8"
   IMAGE: ghcr.io/mojara-framework/mojara
 
 jobs:
