@@ -2,7 +2,7 @@
 
 Mojara supports Apple Silicon natively and Intel Macs through Docker's Linux x86-64 environment.
 
-## Apple Silicon (M1–M5)
+## Apple Silicon (M1-M5)
 
 Install [Pixi](https://pixi.sh/latest/installation/), then run:
 
