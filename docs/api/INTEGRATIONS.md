@@ -1200,9 +1200,11 @@ Serve files by a single router parameter named `name`. No traversal.
 **`StaticFile.__init__`**
 
 ```mojo
-def __init__(out self, root: String, max_bytes: Int = 2 * 1024 * 1024):
+def __init__(
+    out self, root: String, max_bytes: Int = 4 * 1024 * 1024
+) raises:
 ```
-Configure a static-file handler rooted at a trusted directory.
+The directory is the only required argument. For example, `StaticFile("static/vendor/bootstrap")` serves files using the default 4 MiB per-file limit. Pass `max_bytes` only if a custom limit is needed.
 
 **`StaticFile.serve`**
 
