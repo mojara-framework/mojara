@@ -630,7 +630,7 @@ def _dev_watch() raises:
 
 
 def _help():
-    print("Mojara 1.2.8 — Native Mojo framework CLI")
+    print("Mojara 1.2.8 - Native Mojo framework CLI")
     print("Usage: mojara <command> [args]")
     print("  new NAME [--api]   Create project")
     print("  dev                Watch, rebuild and restart on file changes")
