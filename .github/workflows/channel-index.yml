@@ -1,4 +1,4 @@
-name: Verify Mojara 1.2.8 Conda channel
+name: Verify published Mojara Conda channel
 
 on:
   push:
@@ -28,14 +28,14 @@ jobs:
           python3 - <<'PY'
           import json, urllib.request
           base='https://mojara.kasua.ng/conda'
-          for platform in ('linux-64','linux-aarch64','osx-arm64'):
+          for platform, version in (('linux-64','1.2.9'),('linux-aarch64','1.2.9'),('osx-arm64','1.2.8')):
               request=urllib.request.Request(
                   f'{base}/{platform}/repodata.json',
                   headers={'User-Agent':'Mojara-Channel-Qualification'})
               with urllib.request.urlopen(request,timeout=30) as response:
                   index=json.load(response)
               found=[name for name,info in index.get('packages.conda',{}).items()
-                     if info.get('name')=='mojara' and info.get('version')=='1.2.8']
+                     if info.get('name')=='mojara' and info.get('version')==version]
               assert len(found)==1,(platform,found)
               print('PASS:',platform,found[0])
           PY
@@ -44,7 +44,7 @@ jobs:
           cache: false
       - name: Test public installation by name
         run: |
-          pixi global install 'mojara==1.2.8' \
+          pixi global install 'mojara==1.2.9' \
             -c https://mojara.kasua.ng/conda/ \
             -c https://conda.modular.com/max/ \
             -c conda-forge
