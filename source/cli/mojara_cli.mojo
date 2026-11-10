@@ -568,8 +568,38 @@ def _start(force_local: Bool = False) raises:
     _run("./build/app", [])
 
 
+def _dev_needs_rebuild() raises -> Bool:
+    """Recompile only when Mojo sources or the installed framework changed.
+
+    HTML templates, stylesheets, JavaScript and JSON are read at runtime.
+    Restarting their server does not require a Mojo compilation.
+    """
+    if not exists("build/app") or getenv("MOJARA_DEV_FORCE_BUILD", "0") == "1":
+        return True
+    _ = setenv("MOJARA_DEV_MODULE_PATH", _home() + "/lib/mojo/mojara.mojoc")
+    var script = (
+        'if [ "$MOJARA_DEV_MODULE_PATH" -nt build/app ]; then exit 0; fi; '
+        "if find . "
+        "\\( -type d \\( -name build -o -name .pixi -o -name .git \\) -prune \\) "
+        "-o \\( -type f -name '*.mojo' -newer build/app -print -quit \\) "
+        "| grep -q .; then exit 0; fi; exit 1"
+    )
+    var process = Process.run("sh", ["-c", script])
+    var result = process.wait()
+    if not result.exit_code:
+        raise Error("Cannot determine Mojo source freshness")
+    if result.exit_code.value() == 0:
+        return True
+    if result.exit_code.value() == 1:
+        return False
+    raise Error("Unable to scan Mojo source timestamps")
+
+
 def _dev_once() raises:
-    _build()
+    if _dev_needs_rebuild():
+        _build()
+    else:
+        print("Mojo source unchanged; using compiled application.")
     # Only development runs enable the browser SSE endpoint and client.
     _ = setenv("MOJARA_DEV_RELOAD", "1")
     _start(True)
@@ -579,7 +609,7 @@ def _dev_watch() raises:
     _require_app()
     _check()
     print("Watching Mojo, templates, CSS and JavaScript for changes.")
-    print("Server automatically rebuilds and restarts when files change.")
+    print("Mojo source changes trigger compilation; HTML/CSS/JS reuse the binary.")
     print(
         "Browser refresh is automatic after successful server restart. Ctrl+C to stop."
     )
