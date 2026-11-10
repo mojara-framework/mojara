@@ -38,6 +38,9 @@ build_c libmojara_networkpool.dylib "$NATIVE/network_read_pool.c"
 build_c libmojara_sqlitepool.dylib "$NATIVE/sqlite_read_pool.c" -lsqlite3
 build_c libmojara_mysql.dylib "$NATIVE/mysql_bridge.c" $(pkg-config --cflags --libs libmariadb)
 build_c libmojara_asyncdb.dylib "$NATIVE/async_db_bridge.c" $(pkg-config --cflags libpq libmariadb sqlite3) -L"$OUT" -lmojara_mysql -lsqlite3 -lpq
+TXPOOL="$NATIVE/txpool"
+build_c libmojara_txpool_ext.dylib "$TXPOOL/txpool.c" $(pkg-config --cflags --libs libpq libmariadb)
+build_c libmojara_txpool_mojo.dylib "$TXPOOL/txpool_mojo_bridge.c" -I"$TXPOOL" -L"$OUT" -lmojara_txpool_ext
 build_c libflare_fs.dylib "$FFI/fs_wrapper.c"
 build_c libflare_zlib.dylib "$FFI/zlib_wrapper.c" -lz -ldeflate
 build_c libflare_brotli.dylib "$FFI/brotli_wrapper.c" -lbrotlienc -lbrotlidec -lbrotlicommon
