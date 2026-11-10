@@ -12,25 +12,25 @@ Mojara **1.2.8** is available through Pixi and Docker. Install the framework usi
 
 ### Linux (x86-64 and ARM64)
 
-**Step 1 — Install [Pixi](https://pixi.sh/latest/installation/).**
+**Step 1 - Install [Pixi](https://pixi.sh/latest/installation/).**
 
 ```bash
 curl -fsSL https://pixi.sh/install.sh | bash
 ```
 
-**Step 2 — Enable Pixi in the current terminal.**
+**Step 2 - Enable Pixi in the current terminal.**
 
 ```bash
 export PATH="$HOME/.pixi/bin:$PATH"
 ```
 
-**Step 3 — Install Mojara.**
+**Step 3 - Install Mojara.**
 
 ```bash
 pixi global install 'mojara==1.2.8' -c https://mojara.kasua.ng/conda/ -c https://conda.modular.com/max/ -c conda-forge
 ```
 
-**Step 4 — Verify Mojara.**
+**Step 4 - Verify Mojara.**
 
 ```bash
 mojara version
@@ -44,27 +44,27 @@ Pixi installs Mojara and the compatible Mojo compiler. No repository clone or pr
 
 ### Windows 10/11 (WSL2 Ubuntu)
 
-**Step 1 — Open PowerShell as Administrator and install Ubuntu.**
+**Step 1 - Open PowerShell as Administrator and install Ubuntu.**
 
 ```powershell
 wsl --install -d Ubuntu-24.04
 ```
 
-**Step 2 — Open the Ubuntu terminal.** Complete the Ubuntu account setup, then follow the Linux installation steps above **inside Ubuntu**, not PowerShell.
+**Step 2 - Open the Ubuntu terminal.** Complete the Ubuntu account setup, then follow the Linux installation steps above **inside Ubuntu**, not PowerShell.
 
-**Step 3 — Create your first Mojara project.**
+**Step 3 - Create your first Mojara project.**
 
 ```bash
 mojara new hello-mojara
 ```
 
-**Step 4 — Enter the project folder.**
+**Step 4 - Enter the project folder.**
 
 ```bash
 cd hello-mojara
 ```
 
-**Step 5 — Start the development server.**
+**Step 5 - Start the development server.**
 
 ```bash
 mojara dev
@@ -74,25 +74,25 @@ Open `http://localhost:8000` in your Windows browser. Keep projects on the Linux
 
 ### macOS Apple Silicon (M1 and newer)
 
-**Step 1 — Install [Pixi](https://pixi.sh/latest/installation/).**
+**Step 1 - Install [Pixi](https://pixi.sh/latest/installation/).**
 
 ```bash
 curl -fsSL https://pixi.sh/install.sh | bash
 ```
 
-**Step 2 — Enable Pixi.**
+**Step 2 - Enable Pixi.**
 
 ```bash
 export PATH="$HOME/.pixi/bin:$PATH"
 ```
 
-**Step 3 — Install the native Apple Silicon Mojara package.**
+**Step 3 - Install the native Apple Silicon Mojara package.**
 
 ```bash
 pixi global install 'mojara==1.2.8' -c https://mojara.kasua.ng/conda/ -c https://conda.modular.com/max/ -c conda-forge
 ```
 
-**Step 4 — Verify that Mojara and Mojo are available.**
+**Step 4 - Verify that Mojara and Mojo are available.**
 
 ```bash
 mojara doctor
@@ -100,35 +100,35 @@ mojara doctor
 
 Create an application using the steps in [Your first Mojara application](#create-your-first-application).
 
-### macOS Intel — Docker Desktop
+### macOS Intel - Docker Desktop
 
 Intel Macs run Mojara using the official Linux x86-64 image. Install and start [Docker Desktop for Mac](https://docs.docker.com/desktop/setup/install/mac-install/).
 
-**Step 1 — Pull Mojara for Intel.**
+**Step 1 - Pull Mojara for Intel.**
 
 ```bash
 docker pull --platform linux/amd64 ghcr.io/mojara-framework/mojara:1.2.8
 ```
 
-**Step 2 — Create a directory for the Mojara launcher.**
+**Step 2 - Create a directory for the Mojara launcher.**
 
 ```bash
 mkdir -p "$HOME/.local/bin"
 ```
 
-**Step 3 — Install the launcher.**
+**Step 3 - Install the launcher.**
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/mojara-framework/mojara/main/scripts/macos/mojara-intel.sh -o "$HOME/.local/bin/mojara"
 ```
 
-**Step 4 — Make it executable.**
+**Step 4 - Make it executable.**
 
 ```bash
 chmod +x "$HOME/.local/bin/mojara"
 ```
 
-**Step 5 — Add it to your terminal PATH.**
+**Step 5 - Add it to your terminal PATH.**
 
 ```bash
 export PATH="$HOME/.local/bin:$PATH"
@@ -136,41 +136,41 @@ export PATH="$HOME/.local/bin:$PATH"
 
 Add that same export line to `~/.zshrc` to keep it available in future Terminal sessions.
 
-**Step 6 — Check the installation.**
+**Step 6 - Check the installation.**
 
 ```bash
 mojara doctor
 ```
 
-**Step 7 — Create and run an application.** Follow [Your first Mojara application](#create-your-first-application).
+**Step 7 - Create and run an application.** Follow [Your first Mojara application](#create-your-first-application).
 
 The launcher keeps project files on your Mac and runs the Linux Mojo compiler in Docker. The application is accessible at `http://localhost:8000`.
 
 **Processor requirement:** Mojo on Linux x86-64 requires an x86-64-v3 compatible CPU, including AVX2. Older Intel Macs may not meet this requirement.
 
-### macOS Intel — without Docker (Lima VM)
+### macOS Intel - without Docker (Lima VM)
 
 [Lima](https://lima-vm.io/) runs Ubuntu in a lightweight virtual machine without Docker. Install [Homebrew](https://brew.sh/) first.
 
-**Step 1 — Install Lima.**
+**Step 1 - Install Lima.**
 
 ```bash
 brew install lima
 ```
 
-**Step 2 — Create an Ubuntu VM.**
+**Step 2 - Create an Ubuntu VM.**
 
 ```bash
 limactl start --name=mojara-linux template:ubuntu
 ```
 
-**Step 3 — Enter Ubuntu.**
+**Step 3 - Enter Ubuntu.**
 
 ```bash
 limactl shell mojara-linux
 ```
 
-**Step 4 — Install prerequisites in Ubuntu.**
+**Step 4 - Install prerequisites in Ubuntu.**
 
 ```bash
 sudo apt update
@@ -180,7 +180,7 @@ sudo apt update
 sudo apt install -y build-essential curl ca-certificates
 ```
 
-**Step 5 — Install Pixi in Ubuntu.**
+**Step 5 - Install Pixi in Ubuntu.**
 
 ```bash
 curl -fsSL https://pixi.sh/install.sh | bash
@@ -190,7 +190,7 @@ curl -fsSL https://pixi.sh/install.sh | bash
 export PATH="$HOME/.pixi/bin:$PATH"
 ```
 
-**Step 6 — Install Mojara and its development watcher.**
+**Step 6 - Install Mojara and its development watcher.**
 
 ```bash
 pixi global install 'mojara==1.2.8' -c https://mojara.kasua.ng/conda/ -c https://conda.modular.com/max/ -c conda-forge
@@ -200,7 +200,7 @@ pixi global install 'mojara==1.2.8' -c https://mojara.kasua.ng/conda/ -c https:/
 pixi global install 'watchexec>=2.7,<3' -c conda-forge
 ```
 
-**Step 7 — Create a project and enter its folder.**
+**Step 7 - Create a project and enter its folder.**
 
 ```bash
 mojara new hello-mojara
@@ -210,7 +210,7 @@ mojara new hello-mojara
 cd hello-mojara
 ```
 
-**Step 8 — Run the application in the VM.**
+**Step 8 - Run the application in the VM.**
 
 ```bash
 MOJARA_HOST=0.0.0.0 mojara dev
@@ -222,31 +222,31 @@ Visit `http://localhost:8000` on the Mac. This runs the Linux compiler inside a 
 
 The public image is `ghcr.io/mojara-framework/mojara`, available for Linux AMD64 and ARM64. Docker selects the matching architecture automatically.
 
-**Step 1 — Download the image.**
+**Step 1 - Download the image.**
 
 ```bash
 docker pull ghcr.io/mojara-framework/mojara:1.2.8
 ```
 
-**Step 2 — Check its Mojara version.**
+**Step 2 - Check its Mojara version.**
 
 ```bash
 docker run --rm ghcr.io/mojara-framework/mojara:1.2.8 version
 ```
 
-**Step 3 — Create a project in the current host folder.**
+**Step 3 - Create a project in the current host folder.**
 
 ```bash
 docker run --rm -v "$PWD:/workspace" ghcr.io/mojara-framework/mojara:1.2.8 new hello-mojara
 ```
 
-**Step 4 — Enter the project folder.**
+**Step 4 - Enter the project folder.**
 
 ```bash
 cd hello-mojara
 ```
 
-**Step 5 — Start development with hot reload.**
+**Step 5 - Start development with hot reload.**
 
 ```bash
 docker run --rm -it -p 127.0.0.1:8000:8000 -v "$PWD:/workspace" ghcr.io/mojara-framework/mojara:1.2.8 dev
@@ -254,13 +254,13 @@ docker run --rm -it -p 127.0.0.1:8000:8000 -v "$PWD:/workspace" ghcr.io/mojara-f
 
 Open `http://localhost:8000`.
 
-**Step 6 — Compile the project (in a separate terminal, or after stopping the dev server).**
+**Step 6 - Compile the project (in a separate terminal, or after stopping the dev server).**
 
 ```bash
 docker run --rm -v "$PWD:/workspace" ghcr.io/mojara-framework/mojara:1.2.8 build
 ```
 
-**Step 7 — Run the compiled project.**
+**Step 7 - Run the compiled project.**
 
 ```bash
 docker run --rm -it -p 127.0.0.1:8000:8000 -v "$PWD:/workspace" ghcr.io/mojara-framework/mojara:1.2.8 start --local
@@ -272,19 +272,19 @@ The [Docker guide](docs/DOCKER.md) includes Docker Compose, deployment and archi
 
 Use these commands after installing Mojara through Pixi, WSL2, or the Intel Mac Docker launcher.
 
-**Step 1 — Create a project.**
+**Step 1 - Create a project.**
 
 ```bash
 mojara new hello-mojara
 ```
 
-**Step 2 — Change into the new directory.**
+**Step 2 - Change into the new directory.**
 
 ```bash
 cd hello-mojara
 ```
 
-**Step 3 — Start development.**
+**Step 3 - Start development.**
 
 ```bash
 mojara dev
@@ -292,13 +292,13 @@ mojara dev
 
 Open `http://localhost:8000`. For a JSON API, use `mojara new hello-api --api`.
 
-**Step 4 — Compile the app when ready.**
+**Step 4 - Compile the app when ready.**
 
 ```bash
 mojara build
 ```
 
-**Step 5 — Start the compiled app.**
+**Step 5 - Start the compiled app.**
 
 ```bash
 mojara start --local
@@ -314,7 +314,7 @@ Use this section to compile the **actual framework source**, including Mojara's 
 
 Run these commands in an Ubuntu terminal.
 
-**Step 1 — Install native build tools.**
+**Step 1 - Install native build tools.**
 
 ```bash
 sudo apt update
@@ -324,7 +324,7 @@ sudo apt update
 sudo apt install -y git curl ca-certificates build-essential pkg-config python3 patch patchelf binutils
 ```
 
-**Step 2 — Install Pixi.**
+**Step 2 - Install Pixi.**
 
 ```bash
 curl -fsSL https://pixi.sh/install.sh | bash
@@ -334,7 +334,7 @@ curl -fsSL https://pixi.sh/install.sh | bash
 export PATH="$HOME/.pixi/bin:$PATH"
 ```
 
-**Step 3 — Clone the Mojara repository.**
+**Step 3 - Clone the Mojara repository.**
 
 ```bash
 git clone https://github.com/mojara-framework/mojara.git
@@ -344,25 +344,25 @@ git clone https://github.com/mojara-framework/mojara.git
 cd mojara
 ```
 
-**Step 4 — Install the framework's build dependencies.**
+**Step 4 - Install the framework's build dependencies.**
 
 ```bash
 pixi install
 ```
 
-**Step 5 — Retrieve and verify pinned upstream source.**
+**Step 5 - Retrieve and verify pinned upstream source.**
 
 ```bash
 pixi run bash scripts/ci/bootstrap-source.sh
 ```
 
-**Step 6 — Compile Mojara's native SDK.**
+**Step 6 - Compile Mojara's native SDK.**
 
 ```bash
 pixi run bash scripts/ci/build-source-sdk.sh
 ```
 
-**Step 7 — Select your locally compiled SDK.**
+**Step 7 - Select your locally compiled SDK.**
 
 ```bash
 export MOJARA_HOME="$PWD/build/full-integration/sdk"
@@ -382,13 +382,13 @@ mojara doctor
 
 ### macOS Apple Silicon source build
 
-**Step 1 — Install Apple's command-line compiler tools.**
+**Step 1 - Install Apple's command-line compiler tools.**
 
 ```bash
 xcode-select --install
 ```
 
-**Step 2 — Install Pixi.**
+**Step 2 - Install Pixi.**
 
 ```bash
 curl -fsSL https://pixi.sh/install.sh | bash
@@ -398,7 +398,7 @@ curl -fsSL https://pixi.sh/install.sh | bash
 export PATH="$HOME/.pixi/bin:$PATH"
 ```
 
-**Step 3 — Clone Mojara.**
+**Step 3 - Clone Mojara.**
 
 ```bash
 git clone https://github.com/mojara-framework/mojara.git
@@ -408,7 +408,7 @@ git clone https://github.com/mojara-framework/mojara.git
 cd mojara
 ```
 
-**Step 4 — Install dependencies and retrieve upstream source.**
+**Step 4 - Install dependencies and retrieve upstream source.**
 
 ```bash
 pixi install
@@ -418,13 +418,13 @@ pixi install
 pixi run bash scripts/ci/bootstrap-source.sh
 ```
 
-**Step 5 — Compile the Apple Silicon SDK.**
+**Step 5 - Compile the Apple Silicon SDK.**
 
 ```bash
 pixi run bash scripts/ci/build-macos-sdk.sh
 ```
 
-**Step 6 — Enable and verify the locally built SDK.**
+**Step 6 - Enable and verify the locally built SDK.**
 
 ```bash
 export MOJARA_HOME="$PWD/build/full-integration/sdk"
@@ -455,7 +455,6 @@ All built files are in `build/full-integration/sdk/`. [Detailed source build gui
 | macOS Intel through Docker (Linux x86-64) | **Supported** |
 | macOS Intel through Lima (Linux VM) | Linux VM installation available |
 | Native Windows executables | Not yet available |
-| Native macOS Intel compiler | Not provided by upstream Mojo |
 
 ## Features
 
