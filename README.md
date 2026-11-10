@@ -12,7 +12,7 @@ Mojara brings routing, HTTP APIs, templates, authentication, sessions, cookies, 
 
 ## Installation
 
-Mojara **1.2.9** is available through Pixi and Docker. Install the framework using your operating system's instructions below. You only need to clone this GitHub repository if you want to compile or contribute to Mojara itself.
+Mojara **1.2.9** is available through the official release installer and Docker. Install the framework using your operating system's instructions below. You only need to clone this GitHub repository if you want to compile or contribute to Mojara itself.
 
 ### Linux (x86-64 and ARM64)
 
@@ -31,7 +31,7 @@ export PATH="$HOME/.pixi/bin:$PATH"
 **Step 3 - Install Mojara.**
 
 ```bash
-pixi global install 'mojara==1.2.9' -c https://mojara.kasua.ng/conda/ -c https://conda.modular.com/max/ -c conda-forge
+curl -fsSL https://raw.githubusercontent.com/mojara-framework/mojara/main/scripts/install.sh | bash
 ```
 
 **Step 4 - Verify Mojara.**
@@ -44,7 +44,7 @@ mojara version
 mojara doctor
 ```
 
-Pixi installs Mojara and the compatible Mojo compiler. No repository clone or project-level Pixi setup is required.
+The release installer verifies Mojara's published SHA-256 checksum and installs the compatible Mojo compiler through Pixi. No repository clone or project-level Pixi setup is required.
 
 ### Windows 10/11 (WSL2 Ubuntu)
 
@@ -78,31 +78,14 @@ Open `http://localhost:8000` in your Windows browser. Keep projects on the Linux
 
 ### macOS Apple Silicon (M1 and newer)
 
-**Step 1 - Install [Pixi](https://pixi.sh/latest/installation/).**
+Install [Docker Desktop for Mac](https://docs.docker.com/desktop/setup/install/mac-install/) and start it. Mojara 1.2.9 runs on Apple Silicon through the official Linux ARM64 container.
 
 ```bash
-curl -fsSL https://pixi.sh/install.sh | bash
+docker pull --platform linux/arm64 ghcr.io/mojara-framework/mojara:1.2.9
+docker run --rm --platform linux/arm64 ghcr.io/mojara-framework/mojara:1.2.9 version
 ```
 
-**Step 2 - Enable Pixi.**
-
-```bash
-export PATH="$HOME/.pixi/bin:$PATH"
-```
-
-**Step 3 - Install the native Apple Silicon Mojara package.**
-
-```bash
-pixi global install 'mojara==1.2.9' -c https://mojara.kasua.ng/conda/ -c https://conda.modular.com/max/ -c conda-forge
-```
-
-**Step 4 - Verify that Mojara and Mojo are available.**
-
-```bash
-mojara doctor
-```
-
-Create an application using the steps in [Your first Mojara application](#create-your-first-application).
+To create, develop, build and run an application, follow the [Docker steps](#install-with-docker-on-any-supported-cpu) below. The native macOS installer will be published with the Apple Silicon build.
 
 ### macOS Intel - Docker Desktop
 
@@ -197,7 +180,7 @@ export PATH="$HOME/.pixi/bin:$PATH"
 **Step 6 - Install Mojara and its development watcher.**
 
 ```bash
-pixi global install 'mojara==1.2.9' -c https://mojara.kasua.ng/conda/ -c https://conda.modular.com/max/ -c conda-forge
+curl -fsSL https://raw.githubusercontent.com/mojara-framework/mojara/main/scripts/install.sh | bash
 ```
 
 ```bash
