@@ -35,10 +35,20 @@ concurrency:
 jobs:
   macos-framework:
     name: Native Mojara / macOS arm64
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 65
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: v1.2.9
+      - name: Verify release source matches the immutable v1.2.9 tag
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          current="$(git rev-parse HEAD)"
+          tagged="$(git ls-remote origin refs/tags/v1.2.9 | awk '{print $1}')"
+          test -n "$tagged" && test "$current" = "$tagged"
+          echo "Building exact release source $current"
       - name: Confirm Apple Silicon host
         run: |
           test "$(uname -sm)" = "Darwin arm64"
@@ -106,10 +116,12 @@ jobs:
   clean-install:
     name: Fresh native Mojara package / osx-arm64
     needs: macos-framework
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: v1.2.9
       - uses: prefix-dev/setup-pixi@v0.9.3
         with:
           cache: false
