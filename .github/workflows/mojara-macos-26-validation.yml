@@ -1,4 +1,4 @@
-name: macOS 26 Apple Silicon framework validation
+name: macOS Apple Silicon framework validation
 
 on:
   push:
@@ -34,8 +34,8 @@ concurrency:
 
 jobs:
   macos-framework:
-    name: Native Mojara / macOS 26 arm64
-    runs-on: macos-26
+    name: Native Mojara / macOS arm64
+    runs-on: macos-15
     timeout-minutes: 65
     steps:
       - uses: actions/checkout@v4
@@ -106,7 +106,7 @@ jobs:
   clean-install:
     name: Fresh native Mojara package / osx-arm64
     needs: macos-framework
-    runs-on: macos-26
+    runs-on: macos-15
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4

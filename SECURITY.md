@@ -4,7 +4,7 @@
 
 | Version | Platforms | Maintenance |
 | --- | --- | --- |
-| Mojara 1.2.8 | Linux x86-64, Linux ARM64, macOS Apple Silicon, Windows via WSL2 and Intel Mac via Docker | Supported |
+| Mojara 1.2.9 | Linux x86-64, Linux ARM64, macOS Apple Silicon, Windows via WSL2 and Intel Mac via Docker | Supported |
 
 ## Reporting vulnerabilities
 

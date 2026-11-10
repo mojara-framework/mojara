@@ -1,6 +1,7 @@
 FROM ubuntu:24.04
 
-ARG MOJARA_VERSION=1.2.8
+ARG MOJARA_VERSION=1.2.9
+ARG MOJARA_PACKAGE_MODE=channel
 LABEL org.opencontainers.image.title="Mojara" \
       org.opencontainers.image.description="Mojo-first web framework and compiler-ready CLI" \
       org.opencontainers.image.source="https://github.com/mojara-framework/mojara" \
@@ -26,12 +27,18 @@ ENV HOME=/home/ubuntu \
     MOJARA_PORT=8000
 
 RUN curl -fsSL https://pixi.sh/install.sh | bash \
-    && pixi global install "mojara==${MOJARA_VERSION}" \
-       -c https://mojara.kasua.ng/conda/ \
-       -c https://conda.modular.com/max/ \
-       -c conda-forge \
+    && if [ "$MOJARA_PACKAGE_MODE" = "local" ]; then \
+         package="$(find /tmp/mojara-package -type f -name 'mojara-*.conda' -print -quit)"; \
+         test -s "$package"; \
+         pixi global install --path "$package" \
+           -c https://conda.modular.com/max/ -c conda-forge; \
+       else \
+         pixi global install "mojara==${MOJARA_VERSION}" \
+           -c https://mojara.kasua.ng/conda/ \
+           -c https://conda.modular.com/max/ -c conda-forge; \
+       fi \
     && pixi global install 'watchexec>=2.7,<3' -c conda-forge \
-    && mojara version \
+    && mojara version | grep -F "Mojara ${MOJARA_VERSION}" \
     && mojara doctor \
     && watchexec --version
 

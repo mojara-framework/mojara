@@ -6,12 +6,6 @@ on:
       - 'packaging/docker/**'
       - 'scripts/macos/mojara-intel.sh'
       - '.github/workflows/docker-intel-macos.yml'
-  push:
-    branches: [main]
-    paths:
-      - 'packaging/docker/**'
-      - 'scripts/macos/mojara-intel.sh'
-      - '.github/workflows/docker-intel-macos.yml'
   workflow_dispatch:
 
 permissions:
@@ -24,8 +18,8 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
-      - name: Build image using published Mojara Conda package
-        run: docker build --platform linux/amd64 -t mojara-intel:ci -f packaging/docker/Dockerfile .
+      - name: Verify Docker recipe using currently published stable package
+        run: docker build --platform linux/amd64 --build-arg MOJARA_VERSION=1.2.8 -t mojara-intel:ci -f packaging/docker/Dockerfile .
       - name: Check native CLI and Mojo compiler in Linux x86-64 container
         run: |
           docker run --rm --platform linux/amd64 mojara-intel:ci version

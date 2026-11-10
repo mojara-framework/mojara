@@ -1,24 +1,24 @@
 name: Publish Mojara Docker image
 
 on:
-  push:
+  workflow_run:
+    workflows:
+      - Publish native Mojara Linux packages
+    types: [completed]
     branches: [main]
-    paths:
-      - 'packaging/docker/**'
-      - 'scripts/ci/test-docker-image.sh'
-      - '.github/workflows/publish-docker.yml'
-  workflow_dispatch:
 
 permissions:
   contents: read
+  actions: read
   packages: write
 
 env:
-  DOCKER_VERSION: "1.2.8"
+  DOCKER_VERSION: "1.2.9"
   IMAGE: ghcr.io/mojara-framework/mojara
 
 jobs:
   image:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     name: Build and test Docker / ${{ matrix.arch }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 65
@@ -28,14 +28,38 @@ jobs:
         include:
           - runner: ubuntu-24.04
             arch: amd64
+            target: linux-64
           - runner: ubuntu-24.04-arm
             arch: arm64
+            target: linux-aarch64
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - name: Download independently verified native Linux Conda package
+        uses: actions/download-artifact@v4
+        with:
+          name: mojara-release-${{ matrix.target }}
+          path: packaging/docker/package
+          repository: ${{ github.repository }}
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+      - name: Verify package matches published release checksum
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mapfile -d '' packages < <(find packaging/docker/package -type f -name 'mojara-1.2.9-*.conda' -print0)
+          test "${#packages[@]}" -eq 1
+          name="$(basename "${packages[0]}")"
+          curl -fsSL "https://github.com/${{ github.repository }}/releases/download/v$DOCKER_VERSION/SHA256SUMS" -o /tmp/mojara-docker-release-sums
+          expected="$(awk -v file="$name" '$2 == file {print $1}' /tmp/mojara-docker-release-sums)"
+          actual="$(sha256sum "${packages[0]}" | awk '{print $1}')"
+          test -n "$expected" && test "$actual" = "$expected"
       - name: Build official runtime and development image
         run: |
           docker build --platform linux/${{ matrix.arch }} \
             --build-arg "MOJARA_VERSION=$DOCKER_VERSION" \
+            --build-arg MOJARA_PACKAGE_MODE=local \
             -t "$IMAGE:$DOCKER_VERSION-${{ matrix.arch }}" \
             -f packaging/docker/Dockerfile .
       - name: Run real generated Mojo application in Docker

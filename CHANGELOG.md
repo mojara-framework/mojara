@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.9 - Forms, SQL helpers and static files (2026-11-10)
+
+- The public request parser is `parse_form(req)`; optional body limits remain configurable.
+- Portable database helpers: `query()`, `fetch_one()`, `fetch_all()`, `insert()`, `update()`, and `delete()`.
+- `StaticFile("static/vendor/bootstrap")` uses a safe 4 MiB per-file default with no numeric argument required.
+- All changes are distributed through fresh native packages and Docker images after successful platform qualification.
+
 ## 1.2.8 - Initial release (2026-11-10)
 
 Mojara is a web framework written in Mojo, with full first-party source code, a native command-line interface and reproducible builds.

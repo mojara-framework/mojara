@@ -3,7 +3,7 @@ name: Publish Mojara Apple Silicon package
 on:
   workflow_run:
     workflows:
-      - macOS 26 Apple Silicon framework validation
+      - macOS Apple Silicon framework validation
       - Publish native Mojara Linux packages
     types: [completed]
     branches: [main]
@@ -14,7 +14,7 @@ permissions:
   actions: read
 
 concurrency:
-  group: mojara-1.2.8-macos-release
+  group: mojara-1.2.9-macos-release
   cancel-in-progress: false
 
 jobs:
@@ -34,13 +34,13 @@ jobs:
           set -Eeuo pipefail
           # Release binaries must belong to the immutable published version
           # tag; later README/workflow commits must not invalidate that SHA.
-          TAG_KIND="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v1.2.8" --jq '.object.type')"
+          TAG_KIND="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v1.2.9" --jq '.object.type')"
           [[ "$TAG_KIND" == commit ]] || {
-            echo "Expected lightweight v1.2.8 commit tag, got $TAG_KIND" >&2
+            echo "Expected lightweight v1.2.9 commit tag, got $TAG_KIND" >&2
             exit 1
           }
-          RELEASE_COMMIT="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v1.2.8" --jq '.object.sha')"
-          echo "Verifying native packages against published v1.2.8 source $RELEASE_COMMIT"
+          RELEASE_COMMIT="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v1.2.9" --jq '.object.sha')"
+          echo "Verifying native packages against published v1.2.9 source $RELEASE_COMMIT"
           LINUX="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/release-linux.yml/runs?branch=main&status=success&per_page=15" \
             --jq ".workflow_runs[] | select(.head_sha == \"$RELEASE_COMMIT\") | .id" | head -1)"
           MAC="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/mojara-macos-26-validation.yml/runs?branch=main&status=success&per_page=15" \
@@ -50,7 +50,7 @@ jobs:
             echo "Awaiting successful Linux release and macOS clean-install runs"
             exit 0
           fi
-          gh release view v1.2.8 >/dev/null
+          gh release view v1.2.9 >/dev/null
           echo "ready=true" >> "$GITHUB_OUTPUT"
           echo "mac_run=$MAC" >> "$GITHUB_OUTPUT"
           echo "Matched Linux run $LINUX and Mac run $MAC to $RELEASE_COMMIT"
@@ -72,7 +72,7 @@ jobs:
           set -Eeuo pipefail
           sudo apt-get update -qq
           sudo apt-get install -y -qq --no-install-recommends zstd
-          mapfile -d '' ASSETS < <(find release-package -type f -name 'mojara-1.2.8-*.conda' -print0)
+          mapfile -d '' ASSETS < <(find release-package -type f -name 'mojara-1.2.9-*.conda' -print0)
           test "${#ASSETS[@]}" -eq 1
           PKG="${ASSETS[0]}"
           python3 - "$PKG" <<'PY'
@@ -84,19 +84,19 @@ jobs:
               with tarfile.open(fileobj=io.BytesIO(data)) as tf:
                   info = json.load(tf.extractfile('info/index.json'))
           assert info['name'] == 'mojara', info
-          assert info['version'] == '1.2.8', info
+          assert info['version'] == '1.2.9', info
           assert info['subdir'] == 'osx-arm64', info
           print('PASS: Native Apple Silicon package metadata')
           PY
           shasum -a 256 "$PKG" | sed "s|  $PKG$|  $(basename "$PKG")|" > SHA256SUMS-osx-arm64
           asset_name="$(basename "$PKG")"
-          existing="$(gh release view v1.2.8 --json assets --jq '.assets[].name')"
+          existing="$(gh release view v1.2.9 --json assets --jq '.assets[].name')"
           if printf '%s\n' "$existing" | grep -Fxq "$asset_name"; then
-            echo "Mojara v1.2.8 macOS package is already published; preserving its original qualified asset"
+            echo "Mojara v1.2.9 macOS package is already published; preserving its original qualified asset"
             exit 0
           fi
-          gh release upload v1.2.8 "$PKG" SHA256SUMS-osx-arm64
-          gh release view v1.2.8 --json body --jq '.body' > RELEASE_NOTES.md
+          gh release upload v1.2.9 "$PKG" SHA256SUMS-osx-arm64
+          gh release view v1.2.9 --json body --jq '.body' > RELEASE_NOTES.md
           if ! grep -Fq 'macOS Apple Silicon' RELEASE_NOTES.md; then
             cat >> RELEASE_NOTES.md <<'NOTES'
 
@@ -108,6 +108,6 @@ jobs:
           Download the macOS package or install by name after the separately
           hosted Conda channel is indexed.
           NOTES
-            gh release edit v1.2.8 --notes-file RELEASE_NOTES.md
+            gh release edit v1.2.9 --notes-file RELEASE_NOTES.md
           fi
-          echo "PASS: Published qualified Mojara 1.2.8 macOS Apple Silicon binary"
+          echo "PASS: Published qualified Mojara 1.2.9 macOS Apple Silicon binary"

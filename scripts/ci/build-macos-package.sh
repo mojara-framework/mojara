@@ -8,7 +8,7 @@ bash "$ROOT/scripts/ci/prepare-macos-payload.sh"
 pixi global install rattler-build -c conda-forge
 rattler-build build -r "$ROOT/packaging/macos/recipe.yaml" \
   -c https://conda.modular.com/max/ -c conda-forge --output-dir "$OUT"
-PKG="$(find "$OUT" -type f -name 'mojara-1.2.8-*.conda' -print -quit)"
+PKG="$(find "$OUT" -type f -name 'mojara-1.2.9-*.conda' -print -quit)"
 test -s "$PKG" || { echo "macOS Mojara package not produced" >&2; exit 1; }
 file "$PKG"
 shasum -a 256 "$PKG"

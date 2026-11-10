@@ -61,7 +61,7 @@ quickstart = quickstart.replace("pixi run mojara", "mojara")
 quickstart = quickstart.replace("mojara start\n", "mojara start --local\n")
 
 releases = (
-    "# Mojara 1.2.8\n\n"
+    "# Mojara 1.2.9\n\n"
     "Mojara is available natively for Linux x86-64, Linux ARM64 and macOS Apple Silicon, "
     "and through WSL2 on Windows or Docker and Lima on Intel Macs.\n\n"
     "## Install\n\n"
@@ -71,15 +71,15 @@ releases = (
     "- Native Mojo CLI, HTTP routing, APIs, templates, forms, file uploads and WebSockets.\n"
     "- Authentication, sessions, PostgreSQL, MySQL, SQLite and connection pooling.\n"
     "- Official Docker images for Linux AMD64 and ARM64.\n\n"
-    "[Official release and checksums](" + GITHUB + "/releases/tag/v1.2.8).\n"
+    "[Official release and checksums](" + GITHUB + "/releases/tag/v1.2.9).\n"
 )
-releases = releases.replace("1.2.8", version)
+releases = releases.replace("1.2.9", version)
 pages = {
-    "install": ("Install Mojara", "Install Mojara 1.2.8 on every supported platform, Docker, and from source", adapt(install)),
+    "install": ("Install Mojara", "Install Mojara 1.2.9 on every supported platform, Docker, and from source", adapt(install)),
     "docker": ("Mojara with Docker", "Official Mojara AMD64 and ARM64 Docker images and Docker Compose", adapt(docker)),
     "source-build": ("Build Mojara from GitHub", "Compile the native Mojara Mojo framework, CLI and C bridges from source", adapt(source)),
     "quickstart": ("Your first Mojara website", "Generate and build your first native Mojara application", quickstart),
-    "releases": ("Mojara releases", "Mojara 1.2.8 official release and installation", releases),
+    "releases": ("Mojara releases", "Mojara 1.2.9 official release and installation", releases),
 }
 
 template = (DOCS / "install.html").read_text(encoding="utf-8")
