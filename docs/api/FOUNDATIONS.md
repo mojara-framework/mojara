@@ -801,6 +801,68 @@ def execute(self, sql: String, params: List[String] = List[String]()) raises:
 ```
 Execute trusted SQL with bound values and return any affected-row count.
 
+**`DbClient.query`**
+
+```mojo
+def query(
+    self, sql: String, params: List[String] = List[String]()
+) raises -> PgRows:
+```
+Execute a parameterized SQL query and return rows. Use `placeholder(index)`
+to generate database-specific bind parameters.
+
+**`DbClient.fetch_all`**
+
+```mojo
+def fetch_all(
+    self, sql: String, params: List[String] = List[String]()
+) raises -> PgRows:
+```
+Return all rows from a parameterized query as a result collection.
+
+**`DbClient.fetch_one`**
+
+```mojo
+def fetch_one(
+    self, sql: String, params: List[String] = List[String]()
+) raises -> Optional[List[Optional[String]]]:
+```
+Return the first result row, or `None` if none exists. Returned values
+are nullable text strings. Add `LIMIT 1` for large results.
+
+**`DbClient.insert`**
+
+```mojo
+def insert(
+    self, table: String, columns: List[String], values: List[String]
+) raises:
+```
+Insert a record using validated SQL identifiers and bound values.
+
+**`DbClient.update`**
+
+```mojo
+def update(
+    self,
+    table: String,
+    columns: List[String],
+    values: List[String],
+    where_column: String,
+    where_value: String,
+) raises:
+```
+Update rows matching a mandatory equality predicate with bound values.
+
+**`DbClient.delete`**
+
+```mojo
+def delete(
+    self, table: String, where_column: String, where_value: String
+) raises:
+```
+Delete rows matching a mandatory equality predicate. Unrestricted deletion
+is not supported by this helper.
+
 **`DbClient.query_text`**
 
 ```mojo
@@ -808,7 +870,7 @@ def query_text(
 self, sql: String, params: List[String] = List[String]()
 ) raises -> PgRows:
 ```
-Retrieve materialized UTF-8 text and NULL SQL results.
+Compatibility alias returning UTF-8 text and SQL NULL results; prefer `query()`.
 
 **`DbClient.placeholder`**
 
@@ -929,6 +991,16 @@ body: String, max_bytes: Int = 65536, max_fields: Int = 64
 ```
 Decode and validate a bounded URL-encoded form body.
 
+**`parse_form`**
+
+```mojo
+def parse_form(
+    req: Request, max_bytes: Int = 65536, max_fields: Int = 64
+) raises -> FormFields:
+```
+Parse an HTTP URL-encoded form with defaults of 64 KiB and 64 fields.
+Use keyword parameters to override limits when necessary.
+
 **`parse_request_form`**
 
 ```mojo
@@ -936,7 +1008,7 @@ def parse_request_form(
 req: Request, max_bytes: Int = 65536, max_fields: Int = 64
 ) raises -> FormFields:
 ```
-Read and decode a URL-encoded HTTP request body.
+Compatibility alias for `parse_form()`.
 
 ## `mojara.lifecycle`
 

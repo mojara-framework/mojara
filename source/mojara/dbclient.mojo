@@ -95,6 +95,108 @@ struct DbClient(Movable):
             output.append(values^)
         return PgRows(columns^, output^)
 
+    def query(
+        self, sql: String, params: List[String] = List[String]()
+    ) raises -> PgRows:
+        """Execute a parameterized SELECT and return the result rows.
+
+        For PostgreSQL use $1, $2, ... placeholders. SQLite and MySQL
+        use ?. Pass user input through params, never SQL string interpolation.
+        """
+        return self.query_text(sql, params)
+
+    def fetch_all(
+        self, sql: String, params: List[String] = List[String]()
+    ) raises -> PgRows:
+        """Fetch every row returned by a parameterized SELECT."""
+        return self.query(sql, params)
+
+    def fetch_one(
+        self, sql: String, params: List[String] = List[String]()
+    ) raises -> Optional[List[Optional[String]]]:
+        """Fetch the first row, or None if the query returned no records.
+
+        Supply a limiting SQL clause for large result sets. This method
+        returns one row as a list of nullable UTF-8 string values.
+        """
+        var result = self.query(sql, params)
+        if result.row_count() == 0:
+            return None
+        var record = List[Optional[String]]()
+        for column in range(result.column_count()):
+            var cell = result.cell(0, column)
+            if Bool(cell):
+                record.append(Optional[String](cell.value().copy()))
+            else:
+                record.append(None)
+        return Optional[List[Optional[String]]](record^)
+
+    def insert(
+        self, table: String, columns: List[String], values: List[String]
+    ) raises:
+        """Insert one record with validated identifiers and bound values."""
+        if len(columns) == 0 or len(columns) != len(values):
+            raise Error("INSERT requires matching, non-empty columns and values")
+        if len(columns) > 256:
+            raise Error("Too many INSERT columns")
+        var statement = "INSERT INTO " + self.identifier(table) + " ("
+        var placeholders = String("")
+        for i in range(len(columns)):
+            if i > 0:
+                statement += ", "
+                placeholders += ", "
+            statement += self.identifier(columns[i])
+            placeholders += self.placeholder(i + 1)
+        statement += ") VALUES (" + placeholders + ")"
+        self.execute(statement, values)
+
+    def update(
+        self,
+        table: String,
+        columns: List[String],
+        values: List[String],
+        where_column: String,
+        where_value: String,
+    ) raises:
+        """Update matching rows using column-equals-value criteria.
+
+        Bind a scalar WHERE value and use quoted column names, so this
+        convenient operation works consistently on all three databases.
+        Use execute() for more complex predicates or update expressions.
+        """
+        if len(columns) == 0 or len(columns) != len(values):
+            raise Error("UPDATE requires matching, non-empty columns and values")
+        if len(columns) >= 256:
+            raise Error("Too many UPDATE columns")
+        var statement = "UPDATE " + self.identifier(table) + " SET "
+        for i in range(len(columns)):
+            if i > 0:
+                statement += ", "
+            statement += self.identifier(columns[i]) + " = " + self.placeholder(i + 1)
+        statement += (
+            " WHERE " + self.identifier(where_column) + " = "
+            + self.placeholder(len(columns) + 1)
+        )
+        var params = List[String]()
+        for value in values:
+            params.append(value)
+        params.append(where_value)
+        self.execute(statement, params)
+
+    def delete(self, table: String, where_column: String, where_value: String) raises:
+        """Delete records matching a bound equality predicate.
+
+        A mandatory WHERE column prevents accidental full-table deletion.
+        """
+        var statement = (
+            "DELETE FROM " + self.identifier(table)
+            + " WHERE " + self.identifier(where_column) + " = "
+            + self.placeholder(1)
+        )
+        var params = List[String]()
+        params.append(where_value)
+        self.execute(statement, params)
+
     def placeholder(self, index: Int) raises -> String:
         """Return a native bound placeholder; 1-indexed positions."""
         if index < 1 or index > 256:

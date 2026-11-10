@@ -6,7 +6,7 @@ deliberately nonproduction values, and no user credentials are referenced.
 
 from mojara import App, Request, Response, CookieSessionStore
 from mojara.web import UploadFile, UploadFiles
-from mojara.forms import parse_request_form
+from mojara.forms import parse_form
 
 
 def _store() raises -> CookieSessionStore:
@@ -36,7 +36,7 @@ def check_session(req: Request) raises -> Response:
 
 
 def accept_form(req: Request) raises -> Response:
-    var fields = parse_request_form(req)
+    var fields = parse_form(req)
     var name = fields.get_first("name")
     if not name:
         return Response.error(400, "Name is required")

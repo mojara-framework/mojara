@@ -101,10 +101,10 @@ def parse_form_encoded(
     return fields^
 
 
-def parse_request_form(
+def parse_form(
     req: Request, max_bytes: Int = 65536, max_fields: Int = 64
 ) raises -> FormFields:
-    """Read and decode a URL-encoded HTTP request body."""
+    """Parse a URL-encoded HTTP form, with secure default size limits."""
     var content_type = req.headers.get("content-type")
     if not (
         content_type == "application/x-www-form-urlencoded"
@@ -115,3 +115,9 @@ def parse_request_form(
         raise Error("Form body exceeds configured limits")
     var bytes = req.body.copy()
     return parse_form_encoded(_from_bytes(bytes^), max_bytes, max_fields)
+
+def parse_request_form(
+    req: Request, max_bytes: Int = 65536, max_fields: Int = 64
+) raises -> FormFields:
+    """Compatibility alias for parse_form; prefer parse_form in new applications."""
+    return parse_form(req, max_bytes, max_fields)
