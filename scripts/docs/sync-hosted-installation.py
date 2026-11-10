@@ -3,6 +3,7 @@
 from html import escape, unescape
 from pathlib import Path
 import json
+import os
 import re
 import urllib.request
 
@@ -13,7 +14,7 @@ DOCS = ROOT / "site/docs"
 CONTENT = ROOT / "content"
 SITE = ROOT / "site"
 GITHUB = "https://github.com/mojara-framework/mojara"
-RAW = "https://raw.githubusercontent.com/mojara-framework/mojara/main/"
+RAW = "https://raw.githubusercontent.com/mojara-framework/mojara/" + os.environ.get("MOJARA_DOCS_REF", "main") + "/"
 
 def fetch(path):
     req = urllib.request.Request(RAW + path, headers={"User-Agent": "MojaraDocs/current"})
