@@ -12,6 +12,11 @@ done
 work="$(mktemp -d)"
 trap 'rm -rf -- "$work"' EXIT
 src="$ROOT/source/native/txpool"
+if [[ "$(uname -s)" == Darwin ]]; then
+  export DYLD_LIBRARY_PATH="$CONDA_PREFIX/lib:$CONDA_PREFIX/lib/mariadb:${DYLD_LIBRARY_PATH:-}"
+else
+  export LD_LIBRARY_PATH="$CONDA_PREFIX/lib:$CONDA_PREFIX/lib/mariadb:${LD_LIBRARY_PATH:-}"
+fi
 cflags=( -O2 -Wall -Wextra -pthread -DMJDB_INTERNAL_TEST_BACKEND -I"$src" )
 read -r -a includes <<<"$(pkg-config --cflags libpq libmariadb)"
 read -r -a libs <<<"$(pkg-config --libs libpq libmariadb)"
