@@ -16,17 +16,20 @@ GITHUB = "https://github.com/mojara-framework/mojara"
 RAW = "https://raw.githubusercontent.com/mojara-framework/mojara/main/"
 
 def fetch(path):
-    req = urllib.request.Request(RAW + path, headers={"User-Agent": "MojaraDocs/1.2.7"})
+    req = urllib.request.Request(RAW + path, headers={"User-Agent": "MojaraDocs/current"})
     with urllib.request.urlopen(req, timeout=30) as response:
         return response.read().decode("utf-8")
 
 readme = fetch("README.md")
+match = re.search(r"Mojara \*\*(\d+\.\d+\.\d+)\*\*", readme)
+assert match, "No current release version in public README"
+version = match.group(1)
 assert "## Installation\n" in readme and "\n## Features\n" in readme
 install = "# Install Mojara\n\n" + readme.split("## Installation\n", 1)[1].split("\n## Features\n", 1)[0].strip() + "\n"
 docker = fetch("docs/DOCKER.md")
 source = fetch("docs/BUILD-FROM-SOURCE.md")
-assert "mojara==1.2.7" in install
-assert "ghcr.io/mojara-framework/mojara:1.2.7" in install
+assert "mojara==" + version in install
+assert "ghcr.io/mojara-framework/mojara:" + version in install
 
 link_map = {
     "docs/DOCKER.md": "/docs/docker.html",
@@ -65,6 +68,7 @@ releases = (
     "- Official Docker images for Linux AMD64 and ARM64.\n\n"
     "[Official release and checksums](" + GITHUB + "/releases/tag/v1.2.7).\n"
 )
+releases = releases.replace("1.2.7", version)
 pages = {
     "install": ("Install Mojara", "Install Mojara 1.2.7 on every supported platform, Docker, and from source", adapt(install)),
     "docker": ("Mojara with Docker", "Official Mojara AMD64 and ARM64 Docker images and Docker Compose", adapt(docker)),
@@ -104,9 +108,8 @@ for file in DOCS.glob("*.html"):
         page = page.replace('<a href="/docs/source-build.html">Build from source</a>',
                             '<a class="current" href="/docs/source-build.html">Build from source</a>', 1)
     # Align references to the current released CLI/package.
-    page = page.replace("mojara==1.2.6", "mojara==1.2.7")
-    page = page.replace("Mojara 1.2.6", "Mojara 1.2.7")
-    page = page.replace("v1.2.6", "v1.2.7")
+    for previous in ("1.2.6", "1.2.7"):
+        page = page.replace(previous, version)
     file.write_text(page, encoding="utf-8")
 
 index = DOCS / "index.html"
