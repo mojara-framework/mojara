@@ -2,6 +2,14 @@
 
 All notable changes are recorded here. Dates are in UTC.
 
+## 1.2.8 — 2026-11-10
+
+- Improved `mojara dev` to reuse the compiled Mojo executable on HTML, CSS, JavaScript and JSON changes; Mojo-source changes still trigger compilation.
+- Restored the native PostgreSQL/MySQL transaction-pool implementation and Mojo bridge to the public source tree and compiled both libraries as part of native Linux and Apple Silicon builds.
+- Added thread-affinity, rollback, timeout, offline error-path and live database transaction-pool regression checks.
+- Added documentation synchronization for the official Mojara website, with change detection and validation.
+- Continued native library ABI and dependency auditing on packaged releases.
+
 ## 1.2.7 — 2026-11-09
 
 - Added native macOS Apple Silicon builds of the Mojara Mojo framework, command-line interface, and C/C++ bridges.
