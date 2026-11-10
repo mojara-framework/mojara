@@ -39,8 +39,8 @@ fi
 
 stamp=$(date -u +%Y%m%dT%H%M%SZ)
 backup="$BACKUPS/mojara-doc-sync-$stamp.tar.gz"
-tar -C "$ROOT" -czf "$backup" content site/docs site/search.json site/sitemap.xml
-tar -C /var/www/mojara-site -czf "$scratch/fallback.tar.gz" docs search.json sitemap.xml
+tar -C "$ROOT" -czf "$backup" content site/index.html site/docs site/search.json site/sitemap.xml
+tar -C /var/www/mojara-site -czf "$scratch/fallback.tar.gz" index.html docs search.json sitemap.xml
 
 rollback() {
   echo "Documentation sync did not qualify; restoring the previous website." >&2
