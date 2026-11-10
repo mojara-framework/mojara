@@ -1,8 +1,8 @@
 #define _POSIX_C_SOURCE 200809L
 #include "txpool.h"
 #include <libpq-fe.h>
-#include <mysql/mysql.h>
-#include <mysql/errmsg.h>
+#include <mysql.h>
+#include <errmsg.h>
 #include <pthread.h>
 #include <errno.h>
 #include <stdio.h>
