@@ -148,13 +148,24 @@ for slug in ("docker", "source-build"):
         xml = xml.replace("</urlset>", "<url><loc>" + url + "</loc></url></urlset>")
 sitemap_file.write_text(xml, encoding="utf-8")
 
+# Keep the Mojara website landing-page install command in sync with README.
+homepage = SITE / "index.html"
+home_html = homepage.read_text(encoding="utf-8")
+new_home_html = re.sub(
+    r"mojara==1\.\d+\.\d+", "mojara==" + version, home_html
+)
+assert "mojara==" + version in new_home_html, "No versioned install command on homepage"
+if new_home_html != home_html:
+    homepage.write_text(new_home_html, encoding="utf-8")
+
 # Keep the static fallback files aligned with the Mojo website's content.
 fallback = Path("/var/www/mojara-site")
+(fallback / "index.html").write_bytes((SITE / "index.html").read_bytes())
 for page in DOCS.glob("*.html"):
     (fallback / "docs" / page.name).write_text(page.read_text(encoding="utf-8"), encoding="utf-8")
 for name in ("search.json", "sitemap.xml"):
     (fallback / name).write_bytes((SITE / name).read_bytes())
-print("Updated 5 hosted guides with current Mojara 1.2.7 information")
+print(f"Updated 5 hosted guides with current Mojara {version} information")
 print("Updated all documentation sidebars, search and sitemap")
 print("Synchronized live content and static fallback; search entries:", len(records))
 
