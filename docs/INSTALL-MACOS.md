@@ -4,18 +4,21 @@ Mojara supports Apple Silicon natively and Intel Macs through Docker's Linux x86
 
 ## Apple Silicon (M1-M5)
 
-Install [Pixi](https://pixi.sh/latest/installation/), then run:
+Install [Docker Desktop for Mac](https://docs.docker.com/desktop/setup/install/mac-install/). Mojara 1.2.9 runs on Apple Silicon through the official Linux ARM64 image.
 
 ```bash
-pixi global install 'mojara==1.2.9' \
-  -c https://mojara.kasua.ng/conda/ \
-  -c https://conda.modular.com/max/ \
-  -c conda-forge
-
-mojara new hello-mojara
-cd hello-mojara
-mojara dev
+docker pull --platform linux/arm64 ghcr.io/mojara-framework/mojara:1.2.9
+docker run --rm --platform linux/arm64 ghcr.io/mojara-framework/mojara:1.2.9 version
 ```
+
+To create a project in your current folder:
+
+```bash
+docker run --rm --platform linux/arm64 -v "$PWD:/workspace" \
+  ghcr.io/mojara-framework/mojara:1.2.9 new hello-mojara
+```
+
+Then use the [Docker development commands](DOCKER.md) for running and building applications. Native Apple Silicon release binaries are distributed once the Apple Silicon build completes.
 
 ## Intel Mac (Docker Desktop)
 
@@ -77,10 +80,7 @@ sudo apt install -y build-essential curl ca-certificates
 curl -fsSL https://pixi.sh/install.sh | bash
 export PATH="$HOME/.pixi/bin:$PATH"
 
-pixi global install 'mojara==1.2.9' \
-  -c https://mojara.kasua.ng/conda/ \
-  -c https://conda.modular.com/max/ \
-  -c conda-forge
+curl -fsSL https://raw.githubusercontent.com/mojara-framework/mojara/main/scripts/install.sh | bash
 
 pixi global install 'watchexec>=2.7,<3' -c conda-forge
 
@@ -96,4 +96,4 @@ This method **does not use Docker**. The compiler still runs on Linux x86-64 ins
 
 ## Mojara release
 
-The [Mojara 1.2.9 release](https://github.com/mojara-framework/mojara/releases/tag/v1.2.9) provides native Conda packages for Linux x86-64, Linux ARM64 and Apple Silicon. Intel Macs run the Linux x86-64 package through Docker Desktop or the Lima Linux virtual machine described above.
+The [Mojara 1.2.9 release](https://github.com/mojara-framework/mojara/releases/tag/v1.2.9) provides verified Linux x86-64 and ARM64 packages. Both Intel and Apple Silicon Macs can use the official Docker images.
