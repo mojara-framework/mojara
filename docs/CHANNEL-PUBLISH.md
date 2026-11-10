@@ -1,6 +1,6 @@
 # Mojara 1.2.9 Conda channel
 
-The current release is [Mojara 1.2.9](https://github.com/mojara-framework/mojara/releases/tag/v1.2.9). Its native Linux x86-64, Linux ARM64 and Apple Silicon packages are served at https://mojara.kasua.ng/conda/.
+The current release is [Mojara 1.2.9](https://github.com/mojara-framework/mojara/releases/tag/v1.2.9). The official channel at https://mojara.kasua.ng/conda/ serves Mojara 1.2.9 for Linux x86-64 and Linux ARM64. Apple Silicon can use the official 1.2.9 Docker image; native Apple Silicon packages are added to the same channel after build qualification.
 
 ## Publish release packages
 
