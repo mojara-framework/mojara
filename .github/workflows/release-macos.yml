@@ -26,6 +26,8 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
       RELEASE_COMMIT: ${{ github.event.workflow_run.head_sha || github.sha }}
+      UPSTREAM_NAME: ${{ github.event.workflow_run.name || '' }}
+      UPSTREAM_RUN_ID: ${{ github.event.workflow_run.id || '' }}
     steps:
       - name: Verify both platform release gates against current main
         id: gate
@@ -43,11 +45,12 @@ jobs:
           echo "Verifying native packages against published v1.2.9 source $RELEASE_COMMIT"
           LINUX="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/release-linux.yml/runs?branch=main&status=success&per_page=15" \
             --jq ".workflow_runs[] | select(.head_sha == \"$RELEASE_COMMIT\") | .id" | head -1)"
-          # The macOS CI workflow checks out immutable v1.2.9 source, even
-          # when CI workflow fixes are committed after the release tag.
-          MAC_WORKFLOW_HEAD="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq '.object.sha')"
-          MAC="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/mojara-macos-26-validation.yml/runs?branch=main&status=success&per_page=30" \
-            --jq ".workflow_runs[] | select(.head_sha == \"$MAC_WORKFLOW_HEAD\") | .id" | head -1)"
+          # The macOS workflow checks out and verifies immutable v1.2.9,
+          # even when unrelated docs/CI commits move the main branch.
+          MAC=""
+          if [[ "$UPSTREAM_NAME" == "macOS Apple Silicon framework validation" ]]; then
+            MAC="$UPSTREAM_RUN_ID"
+          fi
           if [[ -z "$LINUX" || -z "$MAC" ]]; then
             echo "ready=false" >> "$GITHUB_OUTPUT"
             echo "Awaiting successful Linux release and macOS clean-install runs"
@@ -56,7 +59,7 @@ jobs:
           gh release view v1.2.9 >/dev/null
           echo "ready=true" >> "$GITHUB_OUTPUT"
           echo "mac_run=$MAC" >> "$GITHUB_OUTPUT"
-          echo "Matched Linux run $LINUX to immutable release $RELEASE_COMMIT; Mac run $MAC uses pinned release source"
+          echo "Matched qualified Linux run $LINUX and tag-pinned Mac clean-install run $MAC"
 
       - name: Download macOS package from qualified Apple Silicon run
         if: steps.gate.outputs.ready == 'true'
