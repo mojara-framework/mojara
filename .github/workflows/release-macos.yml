@@ -3,7 +3,7 @@ name: Publish Mojara Apple Silicon package
 on:
   workflow_run:
     workflows:
-      - macOS 26 Apple Silicon framework validation
+      - macOS Apple Silicon framework validation
       - Publish native Mojara Linux packages
     types: [completed]
     branches: [main]
