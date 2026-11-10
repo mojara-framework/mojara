@@ -6,7 +6,10 @@ umask 027
 ROOT=/srv/mojara-website-app
 CACHE=/var/cache/mojara-doc-sync
 BACKUPS=/srv/mojara-site-backups
-RAW=https://raw.githubusercontent.com/mojara-framework/mojara/main
+GITHUB_REPO=https://github.com/mojara-framework/mojara.git
+COMMIT="$(git ls-remote "$GITHUB_REPO" refs/heads/main | awk '{print $1}')"
+[[ "$COMMIT" =~ ^[a-f0-9]{40}$ ]] || { echo "Cannot resolve GitHub main commit" >&2; exit 1; }
+RAW="https://raw.githubusercontent.com/mojara-framework/mojara/$COMMIT"
 VENV=/opt/mojara-doc-sync-venv
 mkdir -p "$CACHE" "$BACKUPS"
 exec 9>"/run/lock/mojara-doc-sync.lock"
