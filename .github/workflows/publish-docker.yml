@@ -1,11 +1,17 @@
 name: Publish Mojara Docker image
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'packaging/docker/**'
+      - '.github/workflows/publish-docker.yml'
   workflow_run:
     workflows:
       - Publish native Mojara Linux packages
     types: [completed]
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -18,7 +24,7 @@ env:
 
 jobs:
   image:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     name: Build and test Docker / ${{ matrix.arch }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 65
@@ -29,32 +35,25 @@ jobs:
           - runner: ubuntu-24.04
             arch: amd64
             target: linux-64
+            package: mojara-1.2.9-hb0f4dca_0.conda
           - runner: ubuntu-24.04-arm
             arch: arm64
             target: linux-aarch64
+            package: mojara-1.2.9-he8cfe8b_0.conda
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.workflow_run.head_sha }}
-      - name: Download independently verified native Linux Conda package
-        uses: actions/download-artifact@v4
-        with:
-          name: mojara-release-${{ matrix.target }}
-          path: packaging/docker/package
-          repository: ${{ github.repository }}
-          run-id: ${{ github.event.workflow_run.id }}
-          github-token: ${{ github.token }}
-      - name: Verify package matches published release checksum
+      - name: Download and verify qualified native 1.2.9 package
         shell: bash
         run: |
           set -Eeuo pipefail
-          mapfile -d '' packages < <(find packaging/docker/package -type f -name 'mojara-1.2.9-*.conda' -print0)
-          test "${#packages[@]}" -eq 1
-          name="$(basename "${packages[0]}")"
-          curl -fsSL "https://github.com/${{ github.repository }}/releases/download/v$DOCKER_VERSION/SHA256SUMS" -o /tmp/mojara-docker-release-sums
-          expected="$(awk -v file="$name" '$2 == file {print $1}' /tmp/mojara-docker-release-sums)"
-          actual="$(sha256sum "${packages[0]}" | awk '{print $1}')"
-          test -n "$expected" && test "$actual" = "$expected"
+          mkdir -p packaging/docker/package
+          base="https://github.com/${{ github.repository }}/releases/download/v$DOCKER_VERSION"
+          curl -fsSL --retry 3 "$base/SHA256SUMS" -o /tmp/mojara-release-sums
+          name="${{ matrix.package }}"
+          expected="$(awk -v file="$name" '$2 == file {print $1}' /tmp/mojara-release-sums)"
+          test -n "$expected"
+          curl -fsSL --retry 3 "$base/$name" -o "packaging/docker/package/$name"
+          printf '%s  %s\n' "$expected" "packaging/docker/package/$name" | sha256sum -c -
       - name: Build official runtime and development image
         run: |
           docker build --platform linux/${{ matrix.arch }} \
