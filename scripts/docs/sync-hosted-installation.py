@@ -21,6 +21,11 @@ def fetch(path):
     with urllib.request.urlopen(req, timeout=30) as response:
         return response.read().decode("utf-8")
 
+def normalize_dashes(text):
+    """Use standard hyphens in published documentation."""
+    return text.replace("\u2014", "-").replace("\u2013", "-")
+
+
 readme = fetch("README.md")
 match = re.search(r"Mojara \*\*(\d+\.\d+\.\d+)\*\*", readme)
 assert match, "No current release version in public README"
@@ -82,6 +87,7 @@ template = (DOCS / "install.html").read_text(encoding="utf-8")
 article_re = re.compile(r'<article class="article">.*?</article>', flags=re.DOTALL)
 assert article_re.search(template)
 for slug, (title, description, md) in pages.items():
+    md = normalize_dashes(md)
     (CONTENT / (slug + ".md")).write_text(md, encoding="utf-8")
     fragment = markdown.markdown(md, extensions=["fenced_code", "tables", "toc"], output_format="html5")
     page = article_re.sub(lambda _: '<article class="article">' + fragment + '</article>', template, count=1)
@@ -111,7 +117,14 @@ for file in DOCS.glob("*.html"):
     # Align references to the current released CLI/package.
     for previous in ("1.2.6", "1.2.7"):
         page = page.replace(previous, version)
-    file.write_text(page, encoding="utf-8")
+    file.write_text(normalize_dashes(page), encoding="utf-8")
+
+# Keep every authored Markdown page consistent with the public style.
+for authoring in CONTENT.glob("*.md"):
+    original = authoring.read_text(encoding="utf-8")
+    cleaned = normalize_dashes(original)
+    if cleaned != original:
+        authoring.write_text(cleaned, encoding="utf-8")
 
 index = DOCS / "index.html"
 index_html = index.read_text(encoding="utf-8")
@@ -138,7 +151,7 @@ for slug, (title, _, _) in pages.items():
     body = unescape(re.sub(r"<[^>]+>", " ", m.group(0) if m else page))
     body = re.sub(r"\s+", " ", body).strip()
     records.append({"slug": slug, "title": title, "text": body[:6500]})
-search_file.write_text(json.dumps(records, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+search_file.write_text(normalize_dashes(json.dumps(records, ensure_ascii=False, separators=(",", ":"))), encoding="utf-8")
 
 sitemap_file = SITE / "sitemap.xml"
 xml = sitemap_file.read_text(encoding="utf-8")
@@ -155,6 +168,7 @@ new_home_html = re.sub(
     r"mojara==1\.\d+\.\d+", "mojara==" + version, home_html
 )
 assert "mojara==" + version in new_home_html, "No versioned install command on homepage"
+new_home_html = normalize_dashes(new_home_html)
 if new_home_html != home_html:
     homepage.write_text(new_home_html, encoding="utf-8")
 
