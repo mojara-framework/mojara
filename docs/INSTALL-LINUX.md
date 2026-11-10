@@ -8,7 +8,7 @@ Install or upgrade Mojara with the official release installer:
 curl -fsSL https://raw.githubusercontent.com/mojara-framework/mojara/main/scripts/install.sh | bash
 ```
 
-This verifies the SHA-256 signature published with the release package and installs Mojara with Pixi and the compatible Mojo compiler. On Windows, run this command inside Ubuntu in WSL2.
+This verifies the SHA-256 checksum published with the release package and installs Mojara with Pixi and the compatible Mojo compiler. On Windows, run this command inside Ubuntu in WSL2.
 
 ## Start a project
 
