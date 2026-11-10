@@ -5,9 +5,9 @@ Mojara is distributed as a ready-to-use Linux Docker image for **x86-64 (amd64)*
 ## Pull Mojara
 
 ```bash
-docker pull ghcr.io/mojara-framework/mojara:1.2.7
-docker run --rm ghcr.io/mojara-framework/mojara:1.2.7 version
-docker run --rm ghcr.io/mojara-framework/mojara:1.2.7 doctor
+docker pull ghcr.io/mojara-framework/mojara:1.2.8
+docker run --rm ghcr.io/mojara-framework/mojara:1.2.8 version
+docker run --rm ghcr.io/mojara-framework/mojara:1.2.8 doctor
 ```
 
 `latest` is also published. For reproducible application builds, prefer the explicit release tag.
@@ -19,7 +19,7 @@ From the directory where you keep your projects:
 ```bash
 docker run --rm \
   -v "$PWD:/workspace" \
-  ghcr.io/mojara-framework/mojara:1.2.7 \
+  ghcr.io/mojara-framework/mojara:1.2.8 \
   new hello-mojara
 
 cd hello-mojara
@@ -33,7 +33,7 @@ Your application is created on the host filesystem, rather than being lost when 
 docker run --rm -it \
   -p 127.0.0.1:8000:8000 \
   -v "$PWD:/workspace" \
-  ghcr.io/mojara-framework/mojara:1.2.7 \
+  ghcr.io/mojara-framework/mojara:1.2.8 \
   dev
 ```
 
@@ -46,7 +46,7 @@ Compile Mojo application source into a native binary:
 ```bash
 docker run --rm \
   -v "$PWD:/workspace" \
-  ghcr.io/mojara-framework/mojara:1.2.7 \
+  ghcr.io/mojara-framework/mojara:1.2.8 \
   build
 ```
 
@@ -56,7 +56,7 @@ Start the previously compiled application:
 docker run --rm -it \
   -p 127.0.0.1:8000:8000 \
   -v "$PWD:/workspace" \
-  ghcr.io/mojara-framework/mojara:1.2.7 \
+  ghcr.io/mojara-framework/mojara:1.2.8 \
   start --local
 ```
 
@@ -67,7 +67,7 @@ Create a `compose.yaml` in an existing Mojara application directory:
 ```yaml
 services:
   mojara:
-    image: ghcr.io/mojara-framework/mojara:1.2.7
+    image: ghcr.io/mojara-framework/mojara:1.2.8
     working_dir: /workspace
     volumes:
       - .:/workspace
