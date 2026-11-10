@@ -21,7 +21,7 @@ The script verifies all package SHA-256 checksums against the GitHub release bef
 ## Install Mojara
 
 ```bash
-pixi global install 'mojara==1.2.9' -c https://mojara.kasua.ng/conda/ -c https://conda.modular.com/max/ -c conda-forge
+curl -fsSL https://raw.githubusercontent.com/mojara-framework/mojara/main/scripts/install.sh | bash
 ```
 
 ```bash
