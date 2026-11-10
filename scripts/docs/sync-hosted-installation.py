@@ -154,4 +154,3 @@ print("Updated 5 hosted guides with current Mojara 1.2.7 information")
 print("Updated all documentation sidebars, search and sitemap")
 print("Synchronized live content and static fallback; search entries:", len(records))
 
-[executed on device: vmi3166522 (9dedaf3d-f67d-45f3-879f-08d518d2f7ef)
