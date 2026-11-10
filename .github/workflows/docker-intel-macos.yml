@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Build image using published Mojara Conda package
         run: docker build --platform linux/amd64 -t mojara-intel:ci -f packaging/docker/Dockerfile .
       - name: Check native CLI and Mojo compiler in Linux x86-64 container

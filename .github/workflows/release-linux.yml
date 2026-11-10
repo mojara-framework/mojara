@@ -41,7 +41,7 @@ jobs:
           - runner: ubuntu-24.04-arm
             target: linux-aarch64
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
       - name: Install build requirements
@@ -107,7 +107,7 @@ jobs:
           - runner: ubuntu-24.04-arm
             target: linux-aarch64
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
       - uses: prefix-dev/setup-pixi@v0.9.3
@@ -136,7 +136,7 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       RELEASE_COMMIT: ${{ github.event.workflow_run.head_sha || github.sha }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.RELEASE_COMMIT }}
       - uses: actions/download-artifact@v4
