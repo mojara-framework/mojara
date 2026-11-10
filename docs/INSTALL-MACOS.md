@@ -80,7 +80,10 @@ sudo apt install -y build-essential curl ca-certificates
 curl -fsSL https://pixi.sh/install.sh | bash
 export PATH="$HOME/.pixi/bin:$PATH"
 
-curl -fsSL https://raw.githubusercontent.com/mojara-framework/mojara/main/scripts/install.sh | bash
+pixi global install 'mojara==1.2.9' \
+  -c https://mojara.kasua.ng/conda/ \
+  -c https://conda.modular.com/max/ \
+  -c conda-forge
 
 pixi global install 'watchexec>=2.7,<3' -c conda-forge
 
@@ -88,6 +91,12 @@ mojara doctor
 mojara new hello-mojara
 cd hello-mojara
 MOJARA_HOST=0.0.0.0 mojara dev
+```
+
+Alternatively, instead of the Pixi installation commands above, you can install Mojara directly inside the Ubuntu VM using the verified release installer:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/mojara-framework/mojara/main/scripts/install.sh | bash
 ```
 
 Visit `http://localhost:8000` from macOS. You can also open and edit your Mojara source through Lima's shared home directory.
