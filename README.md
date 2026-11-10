@@ -2,7 +2,7 @@
 
 **A native web framework for Mojo.**
 
-Mojara brings routing, HTTP APIs, templates, authentication, sessions, cookies, file uploads, WebSockets, MySQL, PostgreSQL, SQLite and more to applications written in Mojo. Performance-sensitive adapters use native C/C++ libraries.
+Mojara brings routing, HTTP APIs, templates, authentication, sessions, cookies, file uploads, WebSockets, MySQL, PostgreSQL, SQLite and more to applications written in Mojo. You can also build AI-powered applications, including AI chat interfaces, model-integrated APIs and intelligent dashboards.
 
 [Documentation](https://mojara.kasua.ng/docs/) · [Full API reference](docs/API-REFERENCE.md) · [Quickstart](https://mojara.kasua.ng/docs/quickstart.html) · [Docker](docs/DOCKER.md) · [Build from source](docs/BUILD-FROM-SOURCE.md) · [Changelog](CHANGELOG.md)
 
