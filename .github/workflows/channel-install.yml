@@ -40,7 +40,7 @@ jobs:
             runner: macos-26
     steps:
       - uses: actions/checkout@v4
-      - uses: prefix-dev/setup-pixi@v0.9.3
+      - uses: prefix-dev/setup-pixi@v0.11.3
         with:
           cache: false
       - name: Install Mojara 1.2.8 by name from official public channel

@@ -44,7 +44,7 @@ jobs:
           test "$(uname -sm)" = "Darwin arm64"
           xcrun --find clang
       - name: Install native Mojo and Conda libraries
-        uses: prefix-dev/setup-pixi@v0.9.3
+        uses: prefix-dev/setup-pixi@v0.11.3
         with:
           cache: false
       - name: Recover checksum-verified upstream Mojo source
@@ -110,7 +110,7 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
-      - uses: prefix-dev/setup-pixi@v0.9.3
+      - uses: prefix-dev/setup-pixi@v0.11.3
         with:
           cache: false
       - uses: actions/download-artifact@v4

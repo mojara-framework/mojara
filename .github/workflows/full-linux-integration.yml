@@ -80,7 +80,7 @@ jobs:
             libssl-dev zlib1g-dev libdeflate-dev libbrotli-dev \
             libsqlite3-dev libpq-dev libmariadb-dev libsodium-dev
       - name: Install Mojo 1.2.0 and pinned JSON build dependency
-        uses: prefix-dev/setup-pixi@v0.9.3
+        uses: prefix-dev/setup-pixi@v0.11.3
         with:
           cache: false
       - name: Fetch SHA256-pinned third-party Mojo SOURCE, not x86 binaries
