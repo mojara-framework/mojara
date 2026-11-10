@@ -51,7 +51,7 @@ rollback() {
 trap rollback ERR
 
 install -m 0644 "$scratch/scripts/docs/sync-hosted-installation.py" "$ROOT/tests/sync_installation_docs.py"
-"$VENV/bin/python" "$ROOT/tests/sync_installation_docs.py"
+MOJARA_DOCS_REF="$COMMIT" "$VENV/bin/python" "$ROOT/tests/sync_installation_docs.py"
 
 "$VENV/bin/python" - <<'PY'
 from pathlib import Path
