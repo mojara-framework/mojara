@@ -19,6 +19,10 @@ RUN apt-get update \
 RUN mkdir -p /workspace \
     && chown ubuntu:ubuntu /workspace
 
+# Copy the architecture-matched, checksum-verified native Mojara package
+# provided by the Docker release workflow.
+COPY --chown=ubuntu:ubuntu packaging/docker/package/ /tmp/mojara-package/
+
 USER ubuntu
 ENV HOME=/home/ubuntu \
     PIXI_HOME=/home/ubuntu/.pixi \
