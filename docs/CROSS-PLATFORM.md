@@ -1,6 +1,6 @@
 # Cross-platform build and test status
 
-Mojara publishes native Conda packages for Linux x86-64, Linux ARM64 and macOS Apple Silicon. Windows uses WSL2 Ubuntu; Intel Macs can run Mojara through Docker or a Linux VM.
+Mojara publishes native Conda packages for Linux x86-64 and Linux ARM64. Windows uses WSL2 Ubuntu; Apple Silicon and Intel Macs can run Mojara 1.2.9 through Docker. Native Apple Silicon package qualification is handled separately.
 
 ## Automated GitHub Actions checks
 
@@ -29,7 +29,7 @@ Apple Silicon package qualification runs on macOS 26 independently of the Linux 
 | macOS Intel through a Linux virtual machine | Linux VM installation available |
 | Native Windows | Not yet supported |
 
-For release downloads, see [Mojara 1.2.9](https://github.com/mojara-framework/mojara/releases/tag/v1.2.9). The Mojara Conda channel serves Linux x86-64, Linux ARM64 and macOS Apple Silicon.
+For release downloads, see [Mojara 1.2.9](https://github.com/mojara-framework/mojara/releases/tag/v1.2.9). The Mojara Conda channel serves Mojara 1.2.9 for Linux x86-64 and Linux ARM64.
 
 ## Native Mojo Windows
 
