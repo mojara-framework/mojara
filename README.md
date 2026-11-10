@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/mojara-logo.webp" alt="Official Mojara logo" width="420">
+</p>
+
 # Mojara 🔥
 
 **A native web framework for Mojo.**
@@ -455,6 +459,14 @@ All built files are in `build/full-integration/sdk/`. [Detailed source build gui
 | macOS Intel through Docker (Linux x86-64) | **Supported** |
 | macOS Intel through Lima (Linux VM) | Linux VM installation available |
 | Native Windows executables | Not yet available |
+
+## Official Mojara branding
+
+The Mojara logo and icon are available directly from this repository:
+
+- [Mojara logo](assets/mojara-logo.webp)
+- [Mojara icon](assets/mojara-icon.webp)
+- [Scalable Mojara icon](assets/mojara-icon.svg)
 
 ## Features
 
