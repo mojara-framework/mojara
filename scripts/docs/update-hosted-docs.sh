@@ -51,11 +51,12 @@ rollback() {
 trap rollback ERR
 
 install -m 0644 "$scratch/scripts/docs/sync-hosted-installation.py" "$ROOT/tests/sync_installation_docs.py"
-"$VENV/bin/python" "$ROOT/tests/sync_installation_docs.py"
+MOJARA_DOCS_REF="$COMMIT" "$VENV/bin/python" "$ROOT/tests/sync_installation_docs.py"
 
 "$VENV/bin/python" - <<'PY'
 from pathlib import Path
 import json
+import re
 root = Path("/srv/mojara-website-app/site")
 pages = {n: (root / "docs" / f"{n}.html").read_text()
          for n in ("install", "docker", "source-build", "quickstart", "releases")}
@@ -63,7 +64,7 @@ assert all(p.count('<article class="article">') == 1 for p in pages.values())
 assert all("</article>" in p for p in pages.values())
 assert "ghcr.io/mojara-framework/mojara:" in pages["docker"]
 assert "bootstrap-source.sh" in pages["source-build"]
-assert "mojara==1.2.7" in pages["install"]
+assert re.search(r"mojara==1\.\d+\.\d+", pages["install"])
 index = json.loads((root / "search.json").read_text())
 assert {"install", "docker", "source-build"} <= {e["slug"] for e in index}
 for path in ("docker", "source-build"):

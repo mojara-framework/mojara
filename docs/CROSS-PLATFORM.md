@@ -28,7 +28,7 @@ Apple Silicon package qualification runs on macOS 26 independently of the Linux 
 | macOS Intel | Not yet supported |
 | Native Windows | Not yet supported |
 
-For release downloads, see [Mojara 1.2.7](https://github.com/mojara-framework/mojara/releases/tag/v1.2.7). The Mojara Conda channel serves Linux x86-64, Linux ARM64 and macOS Apple Silicon.
+For release downloads, see [Mojara 1.2.8](https://github.com/mojara-framework/mojara/releases/tag/v1.2.8). The Mojara Conda channel serves Linux x86-64, Linux ARM64 and macOS Apple Silicon.
 
 ## Native Mojo Windows
 

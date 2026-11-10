@@ -8,7 +8,7 @@ Mojara brings routing, HTTP APIs, templates, authentication, sessions, cookies, 
 
 ## Installation
 
-Mojara **1.2.7** is available through Pixi and Docker. Install the framework using your operating system's instructions below. You only need to clone this GitHub repository if you want to compile or contribute to Mojara itself.
+Mojara **1.2.8** is available through Pixi and Docker. Install the framework using your operating system's instructions below. You only need to clone this GitHub repository if you want to compile or contribute to Mojara itself.
 
 ### Linux (x86-64 and ARM64)
 
@@ -27,7 +27,7 @@ export PATH="$HOME/.pixi/bin:$PATH"
 **Step 3 — Install Mojara.**
 
 ```bash
-pixi global install 'mojara==1.2.7' -c https://mojara.kasua.ng/conda/ -c https://conda.modular.com/max/ -c conda-forge
+pixi global install 'mojara==1.2.8' -c https://mojara.kasua.ng/conda/ -c https://conda.modular.com/max/ -c conda-forge
 ```
 
 **Step 4 — Verify Mojara.**
@@ -89,7 +89,7 @@ export PATH="$HOME/.pixi/bin:$PATH"
 **Step 3 — Install the native Apple Silicon Mojara package.**
 
 ```bash
-pixi global install 'mojara==1.2.7' -c https://mojara.kasua.ng/conda/ -c https://conda.modular.com/max/ -c conda-forge
+pixi global install 'mojara==1.2.8' -c https://mojara.kasua.ng/conda/ -c https://conda.modular.com/max/ -c conda-forge
 ```
 
 **Step 4 — Verify that Mojara and Mojo are available.**
@@ -107,7 +107,7 @@ Intel Macs run Mojara using the official Linux x86-64 image. Install and start [
 **Step 1 — Pull Mojara for Intel.**
 
 ```bash
-docker pull --platform linux/amd64 ghcr.io/mojara-framework/mojara:1.2.7
+docker pull --platform linux/amd64 ghcr.io/mojara-framework/mojara:1.2.8
 ```
 
 **Step 2 — Create a directory for the Mojara launcher.**
@@ -193,7 +193,7 @@ export PATH="$HOME/.pixi/bin:$PATH"
 **Step 6 — Install Mojara and its development watcher.**
 
 ```bash
-pixi global install 'mojara==1.2.7' -c https://mojara.kasua.ng/conda/ -c https://conda.modular.com/max/ -c conda-forge
+pixi global install 'mojara==1.2.8' -c https://mojara.kasua.ng/conda/ -c https://conda.modular.com/max/ -c conda-forge
 ```
 
 ```bash
@@ -225,19 +225,19 @@ The public image is `ghcr.io/mojara-framework/mojara`, available for Linux AMD64
 **Step 1 — Download the image.**
 
 ```bash
-docker pull ghcr.io/mojara-framework/mojara:1.2.7
+docker pull ghcr.io/mojara-framework/mojara:1.2.8
 ```
 
 **Step 2 — Check its Mojara version.**
 
 ```bash
-docker run --rm ghcr.io/mojara-framework/mojara:1.2.7 version
+docker run --rm ghcr.io/mojara-framework/mojara:1.2.8 version
 ```
 
 **Step 3 — Create a project in the current host folder.**
 
 ```bash
-docker run --rm -v "$PWD:/workspace" ghcr.io/mojara-framework/mojara:1.2.7 new hello-mojara
+docker run --rm -v "$PWD:/workspace" ghcr.io/mojara-framework/mojara:1.2.8 new hello-mojara
 ```
 
 **Step 4 — Enter the project folder.**
@@ -249,7 +249,7 @@ cd hello-mojara
 **Step 5 — Start development with hot reload.**
 
 ```bash
-docker run --rm -it -p 127.0.0.1:8000:8000 -v "$PWD:/workspace" ghcr.io/mojara-framework/mojara:1.2.7 dev
+docker run --rm -it -p 127.0.0.1:8000:8000 -v "$PWD:/workspace" ghcr.io/mojara-framework/mojara:1.2.8 dev
 ```
 
 Open `http://localhost:8000`.
@@ -257,13 +257,13 @@ Open `http://localhost:8000`.
 **Step 6 — Compile the project (in a separate terminal, or after stopping the dev server).**
 
 ```bash
-docker run --rm -v "$PWD:/workspace" ghcr.io/mojara-framework/mojara:1.2.7 build
+docker run --rm -v "$PWD:/workspace" ghcr.io/mojara-framework/mojara:1.2.8 build
 ```
 
 **Step 7 — Run the compiled project.**
 
 ```bash
-docker run --rm -it -p 127.0.0.1:8000:8000 -v "$PWD:/workspace" ghcr.io/mojara-framework/mojara:1.2.7 start --local
+docker run --rm -it -p 127.0.0.1:8000:8000 -v "$PWD:/workspace" ghcr.io/mojara-framework/mojara:1.2.8 start --local
 ```
 
 The [Docker guide](docs/DOCKER.md) includes Docker Compose, deployment and architecture details.
