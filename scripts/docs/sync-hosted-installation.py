@@ -34,7 +34,7 @@ assert "## Installation\n" in readme and "\n## Features\n" in readme
 install = "# Install Mojara\n\n" + readme.split("## Installation\n", 1)[1].split("\n## Features\n", 1)[0].strip() + "\n"
 docker = fetch("docs/DOCKER.md")
 source = fetch("docs/BUILD-FROM-SOURCE.md")
-assert "mojara==" + version in install
+assert "raw.githubusercontent.com/mojara-framework/mojara/main/scripts/install.sh" in install
 assert "ghcr.io/mojara-framework/mojara:" + version in install
 
 link_map = {
