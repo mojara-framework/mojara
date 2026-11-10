@@ -5,7 +5,7 @@ deliberately nonproduction values, and no user credentials are referenced.
 """
 
 from mojara import App, Request, Response, CookieSessionStore
-from mojara.web import UploadFile, UploadFiles
+from mojara.web import UploadFile, UploadFiles, StaticFile
 from mojara.forms import parse_form
 
 
@@ -49,6 +49,7 @@ def health(req: Request) raises -> Response:
 
 def main() raises:
     var app = App()
+    app.get_handler("/static/:name", StaticFile("static"))
     app.get("/health", health)
     app.get("/session/issue", issue_session)
     app.get("/session/verify", check_session)

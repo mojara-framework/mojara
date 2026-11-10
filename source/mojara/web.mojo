@@ -73,8 +73,14 @@ struct StaticFile(Copyable, Handler):
     var root: String
     var max_bytes: Int
 
-    def __init__(out self, root: String, max_bytes: Int = 2 * 1024 * 1024):
-        """Configure a static-file handler rooted at a trusted directory."""
+    def __init__(
+        out self, root: String, max_bytes: Int = 4 * 1024 * 1024
+    ) raises:
+        """Serve a trusted directory; the per-file size limit is optional."""
+        if root.byte_length() == 0 or root.byte_length() > 2048:
+            raise Error("Invalid static directory")
+        if max_bytes < 1 or max_bytes > 64 * 1024 * 1024:
+            raise Error("Static file size limit must be between 1 byte and 64 MiB")
         self.root = root
         self.max_bytes = max_bytes
 
