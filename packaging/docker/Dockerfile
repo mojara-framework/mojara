@@ -1,6 +1,6 @@
 FROM ubuntu:24.04
 
-ARG MOJARA_VERSION=1.2.7
+ARG MOJARA_VERSION=1.2.8
 LABEL org.opencontainers.image.title="Mojara" \
       org.opencontainers.image.description="Mojo-first web framework and compiler-ready CLI" \
       org.opencontainers.image.source="https://github.com/mojara-framework/mojara" \
