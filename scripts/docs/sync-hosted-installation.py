@@ -62,8 +62,8 @@ quickstart = quickstart.replace("mojara start\n", "mojara start --local\n")
 
 releases = (
     "# Mojara 1.2.9\n\n"
-    "Mojara is available natively for Linux x86-64, Linux ARM64 and macOS Apple Silicon, "
-    "and through WSL2 on Windows or Docker and Lima on Intel Macs.\n\n"
+    "Mojara supports Linux x86-64 and Linux ARM64, Windows through WSL2, "
+    "and macOS through Docker or Lima.\n\n"
     "## Install\n\n"
     "Choose [Installation](install.html), [Docker](docker.html), "
     "or [Build Mojara from source](source-build.html).\n\n"
