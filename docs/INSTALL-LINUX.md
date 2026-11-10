@@ -2,13 +2,26 @@
 
 Mojara is available for Linux x86-64 and ARM64, including Ubuntu on Windows WSL2.
 
-Install or upgrade Mojara with the official release installer:
+## Install with Pixi
+
+Install [Pixi](https://pixi.sh/latest/installation/) if needed, then install Mojara:
+
+```bash
+pixi global install 'mojara==1.2.9' \
+  -c https://mojara.kasua.ng/conda/ \
+  -c https://conda.modular.com/max/ \
+  -c conda-forge
+```
+
+## Alternative: one-command installer
+
+The official release installer also installs Pixi if needed and checks the SHA-256 checksum of the Mojara package before installing:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/mojara-framework/mojara/main/scripts/install.sh | bash
 ```
 
-This verifies the SHA-256 checksum published with the release package and installs Mojara with Pixi and the compatible Mojo compiler. On Windows, run this command inside Ubuntu in WSL2.
+Use either installation method. On Windows, run the commands **inside Ubuntu in WSL2**.
 
 ## Start a project
 
