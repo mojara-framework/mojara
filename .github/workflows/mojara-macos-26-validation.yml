@@ -130,7 +130,10 @@ jobs:
           name: mojara-osx-arm64-candidate
           path: build/macos-package-download
       - name: Install Mojara native package and run HTTP app from fresh environment
-        run: bash scripts/ci/install-macos-package.sh
+        run: |
+          # The 1.2.10 tag is immutable; fix its stale smoke-test package glob only.
+          sed -i.bak 's/mojara-1\.2\.9-/mojara-1.2.10-/g' scripts/ci/install-macos-package.sh
+          bash scripts/ci/install-macos-package.sh
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
