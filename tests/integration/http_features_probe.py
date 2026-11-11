@@ -117,6 +117,50 @@ def functional_probe(base, host, port, work):
     check(code == 200 and body == b"name:O'Brien CI", "URL-encoded form parse failed")
     print("PASS: URL-encoded form values and escaping")
 
+    # Form parsing must not impose an undocumented 64 KiB or 64-field cap.
+    large_name = b"X" * (128 * 1024)
+    long_form = b"name=" + large_name
+    code, _, body = http(
+        base, "/form", method="POST", data=long_form,
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+    )
+    check(code == 200 and body == b"name:" + large_name,
+          f"form exceeding legacy 64 KiB limit failed: {code}")
+    many_fields = b"name=many" + b"".join(
+        b"&f%d=value" % i for i in range(256)
+    )
+    code, _, body = http(
+        base, "/form", method="POST", data=many_fields,
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+    )
+    check(code == 200 and body == b"name:many",
+          f"form exceeding legacy 64-field limit failed: {code}")
+    print("PASS: server-bounded forms beyond legacy 64 KiB/64 fields")
+
+    boundary = "MojoFormBinaryBoundary2026"
+    multipart = (
+        f'--{boundary}\r\nContent-Disposition: form-data; name="name"\r\n\r\n'
+        'multipart-ok\r\n'
+        f'--{boundary}\r\nContent-Disposition: form-data; name="files"; filename="one.bin"\r\n'
+        'Content-Type: application/octet-stream\r\n\r\n'
+    ).encode() + b'\x00\xff\x01XYZ\r\n' + (
+        f'--{boundary}\r\nContent-Disposition: form-data; name="files"; filename="two.bin"\r\n'
+        'Content-Type: application/octet-stream\r\n\r\n'
+    ).encode() + b'\x00\xfeAB\r\n' + f'--{boundary}--\r\n'.encode()
+    code, _, body = http(
+        base, "/mixed-form", method="POST", data=multipart,
+        headers={"Content-Type": "multipart/form-data; boundary=" + boundary}
+    )
+    check(code == 200 and body == b'multipart-ok:2:binary-ok',
+          f"Mojara mixed multipart parse failed: {code} {body[:120]!r}")
+    malformed = multipart.replace(b'--' + boundary.encode() + b'--\r\n', b'--missing-terminator')
+    code, _, _ = http(
+        base, "/mixed-form", method="POST", data=malformed,
+        headers={"Content-Type": "multipart/form-data; boundary=" + boundary}
+    )
+    check(code != 200, "Truncated multipart form was accepted")
+    print("PASS: unified Mojara parse_form() handles text and repeated binary files")
+
     token = "ci-upload-token-32-characters-minimum"
     boundary = "MojoIntegrationBoundary2026"
     payload = b"ARM64 payload verified."

@@ -43,6 +43,26 @@ def accept_form(req: Request) raises -> Response:
     return Response.text("name:" + name.value())
 
 
+def accept_mixed_form(req: Request) raises -> Response:
+    """Validate Mojara form parsing for mixed fields and repeated binary files."""
+    var fields = parse_form(req)
+    var name = fields.get_first("name")
+    if not Bool(name):
+        return Response.error(400, "Missing form name")
+    var files = fields.files("files")
+    var primary = fields.file("files")
+    if len(files) != 2 or not Bool(primary):
+        return Response.error(400, "Expected two uploaded files")
+    if primary.value().size() != 6 or files[1].size() != 4:
+        return Response.error(400, "Incorrect uploaded binary sizes")
+    var content = primary.value().body.copy()
+    if content[0] != 0 or content[1] != 255 or content[2] != 1:
+        return Response.error(400, "Uploaded binary bytes were altered")
+    if primary.value().filename != "one.bin" or files[1].filename != "two.bin":
+        return Response.error(400, "Uploaded filenames were altered")
+    return Response.text(name.value() + ":2:binary-ok")
+
+
 def health(req: Request) raises -> Response:
     return Response.json('{"status":"ok","framework":"Mojara"}')
 
@@ -54,6 +74,7 @@ def main() raises:
     app.get("/session/issue", issue_session)
     app.get("/session/verify", check_session)
     app.post("/form", accept_form)
+    app.post("/mixed-form", accept_mixed_form)
     app.post_handler(
         "/upload",
         UploadFile(

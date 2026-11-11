@@ -14,6 +14,12 @@ rm -rf -- "$STAGE"
 mkdir -p "$STAGE"
 cp -a "$SDK/." "$STAGE/"
 
+# The native Linux CLI needs the compiler runtime from the installed
+# Conda prefix. Use a relocatable RPATH, not a build-machine path.
+if [[ "$(uname -s)" == "Linux" ]]; then
+  patchelf --force-rpath --set-rpath '$ORIGIN/../../../lib' "$STAGE/bin/mojara"
+fi
+
 # The libraries are below prefix/opt/mojara/lib; Conda runtime libraries
 # are installed under prefix/lib or prefix/lib/mariadb.
 while IFS= read -r -d '' native; do

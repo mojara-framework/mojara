@@ -8,13 +8,13 @@
 
 Mojara brings routing, HTTP APIs, templates, authentication, sessions, cookies, file uploads, WebSockets, MySQL, PostgreSQL, SQLite and more to applications written in Mojo. You can also build AI-powered applications, including AI chat interfaces, model-integrated APIs and intelligent dashboards.
 
-[Documentation](https://mojara.kasua.ng/docs/) · [Full API reference](docs/API-REFERENCE.md) · [Quickstart](https://mojara.kasua.ng/docs/quickstart.html) · [Docker](docs/DOCKER.md) · [Build from source](docs/BUILD-FROM-SOURCE.md) · [Changelog](CHANGELOG.md)
+[Documentation](https://mojara.kasua.ng/docs/) · [File uploads](https://mojara.kasua.ng/docs/uploads.html) · [Full API reference](docs/API-REFERENCE.md) · [Quickstart](https://mojara.kasua.ng/docs/quickstart.html) · [Docker](docs/DOCKER.md) · [Build from source](docs/BUILD-FROM-SOURCE.md) · [Changelog](CHANGELOG.md)
 
 ## Installation
 
-Mojara **1.2.9** is available through the official release installer and Docker. Install the framework using your operating system's instructions below. You only need to clone this GitHub repository if you want to compile or contribute to Mojara itself.
+Mojara **1.2.10** is available through Pixi for Linux x86-64, including Ubuntu on Windows WSL2. Linux ARM64 and macOS use the platform-specific options below while their 1.2.10 packages are being qualified. You only need to clone this GitHub repository to compile or contribute to Mojara.
 
-### Linux (x86-64 and ARM64)
+### Linux x86-64
 
 **Step 1 - Install [Pixi](https://pixi.sh/latest/installation/).**
 
@@ -31,7 +31,7 @@ export PATH="$HOME/.pixi/bin:$PATH"
 **Step 3 - Install Mojara with Pixi.**
 
 ```bash
-pixi global install 'mojara==1.2.9' \
+pixi global install 'mojara==1.2.10' \
   -c https://mojara.kasua.ng/conda/ \
   -c https://conda.modular.com/max/ \
   -c conda-forge
@@ -54,6 +54,19 @@ mojara doctor
 ```
 
 The release installer verifies Mojara's published SHA-256 checksum and installs the compatible Mojo compiler through Pixi. No repository clone or project-level Pixi setup is required.
+
+### Linux ARM64
+
+Install Pixi using the same steps above. The existing ARM64 release is available while its 1.2.10 native build is being qualified:
+
+```bash
+pixi global install 'mojara==1.2.9' \
+  -c https://mojara.kasua.ng/conda/ \
+  -c https://conda.modular.com/max/ \
+  -c conda-forge
+```
+
+Verify the installation with `mojara version` and `mojara doctor`.
 
 ### Windows 10/11 (WSL2 Ubuntu)
 

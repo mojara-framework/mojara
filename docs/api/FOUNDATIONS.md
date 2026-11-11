@@ -982,30 +982,57 @@ def get_first(self, key: String) -> Optional[String]:
 ```
 Return the first value for a field or None if absent.
 
+**`FormFields.file`**
+
+```mojo
+def file(self, key: String) -> Optional[FormFile]:
+```
+Return the first uploaded file for a form field.
+
+**`FormFields.files`**
+
+```mojo
+def files(self, key: String) -> List[FormFile]:
+```
+Return every file uploaded under a form-field name, in submitted order.
+
+**`FormFile`**
+
+```mojo
+struct FormFile(Copyable):
+    var name: String
+    var filename: String
+    var content_type: String
+    var body: List[UInt8]
+```
+The uploaded body contains the original bytes, without text conversion.
+`FormFile.size()` returns its length. A single `parse_form(req)` handles both
+regular form fields and multipart form fields with one or multiple files.
+
 **`parse_form_encoded`**
 
 ```mojo
 def parse_form_encoded(
-body: String, max_bytes: Int = 65536, max_fields: Int = 64
+body: String, max_bytes: Int = 0, max_fields: Int = 0
 ) raises -> FormFields:
 ```
-Decode and validate a bounded URL-encoded form body.
+Decode URL-encoded values. Optional positive limits can impose a stricter policy.
 
 **`parse_form`**
 
 ```mojo
 def parse_form(
-    req: Request, max_bytes: Int = 65536, max_fields: Int = 64
+    req: Request, max_bytes: Int = 0, max_fields: Int = 0
 ) raises -> FormFields:
 ```
-Parse an HTTP URL-encoded form with defaults of 64 KiB and 64 fields.
-Use keyword parameters to override limits when necessary.
+Parse HTTP URL-encoded and multipart forms, including single and repeated binary uploads. The HTTP server applies its configured request-body limit.
+Applications may pass positive limits to impose a stricter per-form policy.
 
 **`parse_request_form`**
 
 ```mojo
 def parse_request_form(
-req: Request, max_bytes: Int = 65536, max_fields: Int = 64
+req: Request, max_bytes: Int = 0, max_fields: Int = 0
 ) raises -> FormFields:
 ```
 Compatibility alias for `parse_form()`.

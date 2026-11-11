@@ -13,12 +13,22 @@ def submit(req: Request) raises -> Response:
     return Response.text("Received")
 ```
 
-The default limit is 64 KiB of encoded form data and 64 fields. Override
-the limits when necessary:
+`parse_form(req)` accepts ordinary URL-encoded forms and multipart forms
+containing files. Mojara uses the configured HTTP request-body limit rather
+than imposing a second, smaller default in the form parser.
+
+For a form with uploads:
 
 ```mojo
-var fields = parse_form(req, max_bytes=131072, max_fields=100)
+var form = parse_form(req)
+var profile_picture = form.file("avatar")
+var attachments = form.files("attachments")
 ```
+
+Uploaded files retain their original binary bytes. The `UploadFile` and
+`UploadFiles` handlers remain available for dedicated upload endpoints.
+Applications can also pass positive `max_bytes` or `max_fields` options
+when they deliberately need stricter form-specific limits.
 
 ## Query the Database
 

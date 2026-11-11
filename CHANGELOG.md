@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.10 - Unified forms and file uploads (2026-11-11)
+
+- Unified `parse_form(req)` handles URL-encoded and multipart forms, including multiple binary files.
+- Removed the extra default form-body and field-count limits; HTTP request-body and upload policies remain configurable.
+- Added three complete file-upload examples and expanded the forms API documentation.
+
 ## 1.2.9 - Forms, SQL helpers and static files (2026-11-10)
 
 - The public request parser is `parse_form(req)`; optional body limits remain configurable.
