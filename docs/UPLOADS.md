@@ -141,4 +141,3 @@ The example reads the upload in memory and returns its size; it does not store t
 
 Authentication and authorization are application responsibilities. The dedicated upload handlers require an upload token; mixed form routes should require the same session and CSRF protections as other state-changing routes. When accepting images or documents, validate the actual bytes as well as the declared MIME type before treating the file as trusted.
 
-Mojara's HTTP server enforces its configured request-body limit. The form parser does not impose a second 64 KiB or 64-field default. Upload-specific limits remain configurable on the dedicated handlers.
