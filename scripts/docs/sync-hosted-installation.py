@@ -35,7 +35,8 @@ install = "# Install Mojara\n\n" + readme.split("## Installation\n", 1)[1].split
 docker = fetch("docs/DOCKER.md")
 source = fetch("docs/BUILD-FROM-SOURCE.md")
 assert "raw.githubusercontent.com/mojara-framework/mojara/main/scripts/install.sh" in install
-assert "ghcr.io/mojara-framework/mojara:" + version in install
+# Docker images can have a different release cadence from native Conda.
+assert re.search(r"ghcr\.io/mojara-framework/mojara:\d+\.\d+\.\d+", install)
 
 link_map = {
     "docs/DOCKER.md": "/docs/docker.html",
@@ -60,26 +61,15 @@ quickstart = (CONTENT / "quickstart.md").read_text(encoding="utf-8")
 quickstart = quickstart.replace("pixi run mojara", "mojara")
 quickstart = quickstart.replace("mojara start\n", "mojara start --local\n")
 
-releases = (
-    "# Mojara 1.2.9\n\n"
-    "Mojara supports Linux x86-64 and Linux ARM64, Windows through WSL2, "
-    "and macOS through Docker or Lima.\n\n"
-    "## Install\n\n"
-    "Choose [Installation](install.html), [Docker](docker.html), "
-    "or [Build Mojara from source](source-build.html).\n\n"
-    "## Features\n\n"
-    "- Native Mojo CLI, HTTP routing, APIs, templates, forms, file uploads and WebSockets.\n"
-    "- Authentication, sessions, PostgreSQL, MySQL, SQLite and connection pooling.\n"
-    "- Official Docker images for Linux AMD64 and ARM64.\n\n"
-    "[Official release and checksums](" + GITHUB + "/releases/tag/v1.2.9).\n"
-)
-releases = releases.replace("1.2.9", version)
+# Preserve accurately qualified platform availability in the published notes.
+releases = (CONTENT / "releases.md").read_text(encoding="utf-8")
+
 pages = {
-    "install": ("Install Mojara", "Install Mojara 1.2.9 on every supported platform, Docker, and from source", adapt(install)),
+    "install": ("Install Mojara", "Install Mojara " + version + " on supported platforms, with Docker and source options", adapt(install)),
     "docker": ("Mojara with Docker", "Official Mojara AMD64 and ARM64 Docker images and Docker Compose", adapt(docker)),
     "source-build": ("Build Mojara from GitHub", "Compile the native Mojara Mojo framework, CLI and C bridges from source", adapt(source)),
     "quickstart": ("Your first Mojara website", "Generate and build your first native Mojara application", quickstart),
-    "releases": ("Mojara releases", "Mojara 1.2.9 official release and installation", releases),
+    "releases": ("Mojara releases", "Mojara " + version + " native release status and installation", releases),
 }
 
 template = (DOCS / "install.html").read_text(encoding="utf-8")
