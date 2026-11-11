@@ -40,13 +40,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: v1.2.9
-      - name: Verify release source matches the immutable v1.2.9 tag
+          ref: v1.2.10
+      - name: Verify release source matches the immutable v1.2.10 tag
         shell: bash
         run: |
           set -Eeuo pipefail
           current="$(git rev-parse HEAD)"
-          tagged="$(git ls-remote origin refs/tags/v1.2.9 | awk '{print $1}')"
+          tagged="$(git ls-remote origin refs/tags/v1.2.10 | awk '{print $1}')"
           test -n "$tagged" && test "$current" = "$tagged"
           echo "Building exact release source $current"
       - name: Confirm Apple Silicon host
@@ -121,7 +121,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: v1.2.9
+          ref: v1.2.10
       - uses: prefix-dev/setup-pixi@v0.9.3
         with:
           cache: false
