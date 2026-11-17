@@ -1,0 +1,33 @@
+name: Native static site CLI
+
+on:
+  pull_request:
+    paths:
+      - "source/cli/mojara_cli.mojo"
+      - "tests/site-cli-smoke.sh"
+      - "scripts/build-cli.sh"
+      - ".github/workflows/site-cli.yml"
+  push:
+    branches: [main]
+    paths:
+      - "source/cli/mojara_cli.mojo"
+      - "tests/site-cli-smoke.sh"
+      - "scripts/build-cli.sh"
+      - ".github/workflows/site-cli.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  static-site:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: prefix-dev/setup-pixi@v0.9.3
+        with:
+          cache: false
+      - name: Compile native Mojo CLI
+        run: pixi run bash scripts/build-cli.sh
+      - name: Test static generation and existing app scaffolding
+        run: pixi run bash tests/site-cli-smoke.sh
