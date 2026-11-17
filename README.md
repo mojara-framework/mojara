@@ -8,7 +8,7 @@
 
 Mojara brings routing, HTTP APIs, templates, authentication, sessions, cookies, file uploads, WebSockets, MySQL, PostgreSQL, SQLite and more to applications written in Mojo. You can also build AI-powered applications, including AI chat interfaces, model-integrated APIs and intelligent dashboards.
 
-[Documentation](https://mojara.kasua.ng/docs/) · [File uploads](https://mojara.kasua.ng/docs/uploads.html) · [Full API reference](docs/API-REFERENCE.md) · [Quickstart](https://mojara.kasua.ng/docs/quickstart.html) · [Docker](docs/DOCKER.md) · [Build from source](docs/BUILD-FROM-SOURCE.md) · [Changelog](CHANGELOG.md)
+[Documentation](https://mojara.kasua.ng/docs/) · [File uploads](https://mojara.kasua.ng/docs/uploads.html) · [Full API reference](docs/API-REFERENCE.md) · [Static websites](docs/STATIC-SITES.md) · [Quickstart](https://mojara.kasua.ng/docs/quickstart.html) · [Docker](docs/DOCKER.md) · [Build from source](docs/BUILD-FROM-SOURCE.md) · [Changelog](CHANGELOG.md)
 
 ## Installation
 
@@ -484,6 +484,7 @@ All built files are in `build/full-integration/sdk/`. [Detailed source build gui
 - WebSockets, streaming and native networking
 - MySQL, PostgreSQL, SQLite, migrations and database pools
 - Native Mojo CLI, source compilation, hot reload and deployment
+- Native Markdown-powered static site generation (`mojara site new`, `mojara site build`)
 
 ## Repository structure
 
