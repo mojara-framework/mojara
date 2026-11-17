@@ -3,7 +3,7 @@ Builds apps using the installed Mojara SDK and watches edits using watchexec.
 """
 
 from std.os import getenv, setenv, mkdir
-from std.os.path import exists, dirname, realpath
+from std.os.path import exists, dirname, realpath, isdir, islink
 from std.os.process import Process
 from std.pathlib import Path
 from std.sys import argv
@@ -629,6 +629,339 @@ def _dev_watch() raises:
     )
 
 
+
+# Static sites use a separate command namespace and output directory. This
+# builder never imports the HTTP server, compiles app.mojo or touches build/.
+def _site_escape(value: String) -> String:
+    return (
+        value.replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace('"', "&quot;")
+        .replace("'", "&#39;")
+    )
+
+
+def _site_emphasis(value: String) -> String:
+    """Escape text before adding simple bold and inline-code markup."""
+    var chunks = value.split("`")
+    var output = String("")
+    if len(chunks) % 2 == 0:
+        return _site_escape(value)
+    for i in range(len(chunks)):
+        var chunk = String(chunks[i])
+        if i % 2 == 1:
+            output += "<code>" + _site_escape(chunk) + "</code>"
+        else:
+            var bold = chunk.split("**")
+            if len(bold) % 2 == 0:
+                output += _site_escape(chunk)
+            else:
+                for j in range(len(bold)):
+                    if j % 2 == 1:
+                        output += "<strong>" + _site_escape(String(bold[j])) + "</strong>"
+                    else:
+                        output += _site_escape(String(bold[j]))
+    return output^
+
+
+def _site_safe_link(url: String) -> Bool:
+    return (
+        url.startswith("https://")
+        or url.startswith("http://")
+        or url.startswith("mailto:")
+        or url.startswith("/")
+        or url.startswith("./")
+        or url.startswith("../")
+        or url.startswith("#")
+    )
+
+
+def _site_inline(value: String) -> String:
+    """Render basic Markdown links without allowing dangerous URL schemes."""
+    var output = String("")
+    var offset = 0
+    while offset < value.byte_length():
+        var opening = value.find("[", offset)
+        if opening < 0:
+            output += _site_emphasis(String(value[byte=offset:]))
+            break
+        var separator = value.find("](", opening + 1)
+        if separator < 0:
+            output += _site_emphasis(String(value[byte=offset:]))
+            break
+        var closing = value.find(")", separator + 2)
+        if closing < 0:
+            output += _site_emphasis(String(value[byte=offset:]))
+            break
+        output += _site_emphasis(String(value[byte=offset:opening]))
+        var label = String(value[byte=opening + 1:separator])
+        var url = String(value[byte=separator + 2:closing])
+        if _site_safe_link(url):
+            output += (
+                '<a href="' + _site_escape(url) + '">' +
+                _site_emphasis(label) + "</a>"
+            )
+        else:
+            output += _site_emphasis(String(value[byte=opening:closing + 1]))
+        offset = closing + 1
+    return output^
+
+
+def _site_markdown(source: String) raises -> String:
+    """Render headings, paragraphs, lists, fenced code, links and inline markup."""
+    var html = String("")
+    var paragraph = String("")
+    var in_list = False
+    var in_code = False
+    for part in source.split("\n"):
+        var line = String(part)
+        var trimmed = String(line.strip())
+        if trimmed.startswith("```"):
+            if in_code:
+                html += "</code></pre>\n"
+                in_code = False
+            else:
+                if paragraph.byte_length() > 0:
+                    html += "<p>" + _site_inline(paragraph) + "</p>\n"
+                    paragraph = ""
+                if in_list:
+                    html += "</ul>\n"
+                    in_list = False
+                html += "<pre><code>"
+                in_code = True
+            continue
+        if in_code:
+            html += _site_escape(line) + "\n"
+            continue
+        if trimmed.byte_length() == 0:
+            if paragraph.byte_length() > 0:
+                html += "<p>" + _site_inline(paragraph) + "</p>\n"
+                paragraph = ""
+            if in_list:
+                html += "</ul>\n"
+                in_list = False
+            continue
+        var heading_level = 0
+        while heading_level < 6 and heading_level < trimmed.byte_length():
+            if Int(trimmed.as_bytes()[heading_level]) != 35:
+                break
+            heading_level += 1
+        if (
+            heading_level > 0
+            and heading_level < trimmed.byte_length()
+            and Int(trimmed.as_bytes()[heading_level]) == 32
+        ):
+            if paragraph.byte_length() > 0:
+                html += "<p>" + _site_inline(paragraph) + "</p>\n"
+                paragraph = ""
+            if in_list:
+                html += "</ul>\n"
+                in_list = False
+            var tag = "h" + String(heading_level)
+            html += (
+                "<" + tag + ">" +
+                _site_inline(String(trimmed[byte=heading_level + 1:])) +
+                "</" + tag + ">\n"
+            )
+            continue
+        if trimmed.startswith("- ") or trimmed.startswith("* "):
+            if paragraph.byte_length() > 0:
+                html += "<p>" + _site_inline(paragraph) + "</p>\n"
+                paragraph = ""
+            if not in_list:
+                html += "<ul>\n"
+                in_list = True
+            html += "<li>" + _site_inline(String(trimmed[byte=2:])) + "</li>\n"
+            continue
+        if in_list:
+            html += "</ul>\n"
+            in_list = False
+        if paragraph.byte_length() > 0:
+            paragraph += " "
+        paragraph += trimmed
+    if in_code:
+        raise Error("Unclosed Markdown code fence")
+    if paragraph.byte_length() > 0:
+        html += "<p>" + _site_inline(paragraph) + "</p>\n"
+    if in_list:
+        html += "</ul>\n"
+    return html^
+
+
+def _site_create_directory(path: String) raises:
+    """Create only directories, refusing to follow pre-existing symlinks."""
+    if exists(path) or islink(path):
+        if islink(path) or not isdir(path):
+            raise Error("Not a safe output directory: " + path)
+        return
+    var parent = dirname(path)
+    if parent.byte_length() > 0 and parent != path:
+        _site_create_directory(parent)
+    mkdir(path)
+
+
+def _site_track_output(path: String, mut outputs: List[String]) raises:
+    if path == "dist/.mojara-site":
+        raise Error("Reserved site output path")
+    for previous in outputs:
+        if previous == path:
+            raise Error("Two site sources write the same destination: " + path)
+    if islink(path) or (exists(path) and isdir(path)):
+        raise Error("Unsafe output file path: " + path)
+    outputs.append(path)
+
+
+def _site_copy_assets(source: String, target: String, mut outputs: List[String]) raises:
+    if not exists(source):
+        return
+    if islink(source) or not isdir(source):
+        raise Error("Static asset directory must not be a symlink: " + source)
+    _site_create_directory(target)
+    for entry in Path(source).listdir():
+        var name = entry.name()
+        var src = source + "/" + name
+        var dst = target + "/" + name
+        if islink(src):
+            raise Error("Symlinked static assets are not supported: " + src)
+        if isdir(src):
+            _site_copy_assets(src, dst, outputs)
+        else:
+            _site_track_output(dst, outputs)
+            var data = Path(src).read_bytes()
+            Path(dst).write_bytes(Span(data))
+
+
+def _site_page(source_path: String, fallback: String, layout: String) raises -> String:
+    var raw = Path(source_path).read_text()
+    var title = String("")
+    var description = String("")
+    var body = String("")
+    var first = True
+    var front = False
+    for entry in raw.split("\n"):
+        var line = String(entry)
+        var trimmed = String(line.strip())
+        if first:
+            first = False
+            if trimmed == "---":
+                front = True
+                continue
+        if front:
+            if trimmed == "---":
+                front = False
+            elif trimmed.startswith("title:"):
+                var value = String(trimmed[byte=6:])
+                title = String(value.strip())
+            elif trimmed.startswith("description:"):
+                var value = String(trimmed[byte=12:])
+                description = String(value.strip())
+            continue
+        if title.byte_length() == 0 and trimmed.startswith("# "):
+            title = String(trimmed[byte=2:])
+        body += line + "\n"
+    if front:
+        raise Error("Unclosed Markdown front matter: " + source_path)
+    if title.byte_length() == 0:
+        title = fallback
+    var rendered = layout.replace("{{ content }}", _site_markdown(body))
+    rendered = rendered.replace("{{ title }}", _site_escape(title))
+    rendered = rendered.replace("{{ description }}", _site_escape(description))
+    return rendered^
+
+
+def _site_pages(
+    source: String, relative: String, layout: String, mut outputs: List[String]
+) raises:
+    if islink(source):
+        raise Error("Symlinked content directories are not supported: " + source)
+    for entry in Path(source).listdir():
+        var name = entry.name()
+        var src = source + "/" + name
+        if islink(src):
+            raise Error("Symlinked content is not supported: " + src)
+        if isdir(src):
+            _site_pages(src, relative + name + "/", layout, outputs)
+        elif name.endswith(".md"):
+            var stem = String(name[byte=0:name.byte_length() - 3])
+            if stem.byte_length() == 0:
+                raise Error("Invalid Markdown filename: " + src)
+            var destination = String("")
+            if stem == "index":
+                destination = "dist/" + relative + "index.html"
+            else:
+                destination = "dist/" + relative + stem + "/index.html"
+            _site_create_directory(dirname(destination))
+            _site_track_output(destination, outputs)
+            Path(destination).write_text(_site_page(src, stem, layout))
+            print("  ", src, "->", destination)
+
+
+def _site_new(name: String) raises:
+    if not _valid_name(name):
+        raise Error("Invalid site name. Use letters, digits, '-' or '_'.")
+    if exists(name) or islink(name):
+        raise Error("Refusing to overwrite existing path: " + name)
+    mkdir(name)
+    mkdir(name + "/content")
+    mkdir(name + "/templates")
+    mkdir(name + "/static")
+    Path(name + "/mojara.project").write_text("name " + name + "\ntype site\n")
+    Path(name + "/.gitignore").write_text("dist/\n.mojo_cache/\n")
+    Path(name + "/content/index.md").write_text(
+        "---\ntitle: Welcome to " + name +
+        "\ndescription: A website built with Mojara and Mojo.\n---\n\n"
+        "# Welcome to " + name +
+        "\n\nThis website is generated by **Mojara**.\n\n"
+        "- Write content in Markdown\n"
+        "- Put images and stylesheets in static/\n"
+        "- Run mojara site build\n"
+    )
+    Path(name + "/templates/base.html").write_text(
+        '<!doctype html>\n<html lang="en">\n<head>\n'
+        '  <meta charset="utf-8">\n'
+        '  <meta name="viewport" content="width=device-width, initial-scale=1">\n'
+        '  <meta name="description" content="{{ description }}">\n'
+        '  <title>{{ title }}</title>\n'
+        '  <link rel="stylesheet" href="/static/style.css">\n'
+        '</head>\n<body>\n<main>{{ content }}</main>\n</body>\n</html>\n'
+    )
+    Path(name + "/static/style.css").write_text(
+        "body{font:16px/1.65 system-ui,sans-serif;background:#fffaf3;"
+        "color:#39261c;margin:0;padding:40px}"
+        "main{max-width:780px;margin:auto}h1,h2{color:#d9531e}"
+        "a{color:#ac4319}pre{overflow:auto;background:#fff0df;padding:16px}"
+        "code{font:0.92em ui-monospace,monospace}\n"
+    )
+    print("Created static website:", name)
+    print("Next: cd " + name + " && mojara site build")
+
+
+def _site_build() raises:
+    if not isdir("content") or islink("content"):
+        raise Error("content/ is missing or unsafe. Run from a static site project.")
+    if not exists("templates/base.html") or islink("templates") or islink("templates/base.html"):
+        raise Error("Missing or unsafe templates/base.html")
+    if exists("app.mojo"):
+        raise Error("This is a dynamic Mojara app. Static sites require a separate project.")
+    if exists("dist") or islink("dist"):
+        if islink("dist") or not isdir("dist"):
+            raise Error("dist/ is not a safe directory")
+        if not exists("dist/.mojara-site") or islink("dist/.mojara-site"):
+            raise Error("dist/ is not owned by the Mojara site builder; refusing overwrite")
+    else:
+        mkdir("dist")
+        Path("dist/.mojara-site").write_text("Generated by mojara site build.\n")
+    var layout = Path("templates/base.html").read_text()
+    if layout.find("{{ content }}") < 0:
+        raise Error("templates/base.html must contain {{ content }}")
+    var outputs = List[String]()
+    _site_copy_assets("static", "dist/static", outputs)
+    _site_pages("content", "", layout, outputs)
+    print("Static website generated in dist/")
+
+
+
 def _help():
     print("Mojara 1.2.10 - Native Mojo framework CLI")
     print("Usage: mojara <command> [args]")
@@ -636,6 +969,8 @@ def _help():
     print("  dev                Watch, rebuild and restart on file changes")
     print("  dev --once         Build and run once")
     print("  build              Compile app, optional DB runner, and systemd unit")
+    print("  site new NAME      Create a Markdown-powered static website")
+    print("  site build         Generate static HTML and assets into dist/")
     print("  db init            Generate db.mojo with code-first and SQL support")
     print("  db plan            Preview additive schema changes")
     print("  db migrate         Execute code-first and registered SQL migrations")
@@ -680,6 +1015,13 @@ def main() raises:
         if len(args) != 3:
             raise Error("Usage: mojara db init|plan|migrate")
         _db_action(String(args[2]))
+    elif command == "site":
+        if len(args) == 4 and String(args[2]) == "new":
+            _site_new(String(args[3]))
+        elif len(args) == 3 and String(args[2]) == "build":
+            _site_build()
+        else:
+            raise Error("Usage: mojara site new NAME | mojara site build")
     elif command == "build":
         if len(args) != 2:
             raise Error("Usage: mojara build")
